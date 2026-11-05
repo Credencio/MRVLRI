@@ -4,7 +4,7 @@
    ========================================================================== */
 window.LRI_CONFIG = {
   // 1. Feature Service (ArcGIS Online) — camada 0 = MRV_LRI
-  featureService: "https://services8.arcgis.com/Yb7xytb4Ff2eEN6Y/arcgis/rest/services/service_2a0e752485344090b3e771e2855e696b/FeatureServer",
+  featureService: "https://services8.arcgis.com/Yb7xytb4Ff2eEN6Y/arcgis/rest/services/survey123_e582f1eafa404ce8b70e5dbc8ec20e56_results/FeatureServer",
   layerId: 0,
 
   // 2. Experience Builder (Validação — requer username/password ArcGIS Online)
