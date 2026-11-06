@@ -1,6 +1,6 @@
 # Land Resilience Index (LRI) · Plataforma MRV
 
-Plataforma web estática (HTML + CSS + JavaScript) para **Monitoria, Reporte e Verificação (MRV)** do Land Resilience Index em Bárue e Vanduzi. Pronta para **GitHub Pages** — não precisa de servidor nem de *build*.
+Plataforma web estática (HTML + CSS + JavaScript) para **Monitoria, Reporte e Verificação (MRV)** do Land Resilience Index em Bárue e Vanduzi. Pronta para **GitHub Pages** — não precisa de servidor nem de *build*..
 
 | Área | O que faz | Acesso |
 |---|---|---|
