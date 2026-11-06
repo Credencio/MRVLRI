@@ -2,13 +2,13 @@
 (function () {
   const T = {
     pt: {
-      appName: "Land Adaptive Capacity Index", appSub: "Plataforma de MRV",
+      appName: "Land Resilience Index", appSub: "Plataforma de MRV",
       navDocs: "Documentos", docsTitle: "Documentos metodológicos", docsIntro: "Manuais, guias e outros documentos de referência do LRI para consulta e download.",
       docsPages: "págs.", docsOpen: "Abrir", docsNone: "Nenhum documento encontrado.", docsError: "Não foi possível carregar a lista de documentos.", methodDocs: "Ver documentos metodológicos para descarregar →",
       navDashboard: "Dashboard", navTech: "Área Técnica", navSubmit: "Submissão de dados", navValidate: "Validação",
       navAbout: "Sobre o LRI", aboutTitle: "Sobre o LRI",
       aboutGoalH: "Objetivo da plataforma",
-      aboutGoalP: "Esta plataforma apoia a Monitoria, Reporte e Verificação (MRV) do Land Adaptive Capacity Index (LRI). Reúne os dados recolhidos no terreno nos distritos de Bárue e Vanduzi (Manica, Moçambique), mas esta ainda preparada pra receber informação de LRI de outros distritos, valida-os e apresenta o estado de Capacidade Adaptativa da paisagem de forma pública e transparente, usando apenas dados validados.",
+      aboutGoalP: "Esta plataforma apoia a Monitoria, Reporte e Verificação (MRV) do Land Resilience Index (LRI). Reúne os dados recolhidos no terreno nos distritos de Bárue e Vanduzi (Manica, Moçambique), mas esta ainda preparada pra receber informação de LRI de outros distritos, valida-os e apresenta o estado de Capacidade Adaptativa da paisagem de forma pública e transparente, usando apenas dados validados.",
       aboutWhatP: "O LRI resume o estado da paisagem num valor de 1 a 4, organizado em três pilares (Terra, Água e Capacidade Adaptativa) e 17 indicadores.",
       aboutFlowH: "Do terreno ao Dashboard",
       af1: "Recolha", af1d: "Formulário Survey123, sem login", af2: "Camada", af2d: "ArcGIS Online: todo o registo entra Pendente", af3: "Validação", af3d: "Técnico com login valida ou rejeita",
@@ -65,8 +65,8 @@
       openNew: "Abrir em nova janela", embedHint: "Se o formulário não carregar aqui (bloqueio de cookies de terceiros no navegador), use “Abrir em nova janela”.",
       statusCounts: "Estado dos registos na base de dados",
       devBy: "Desenvolvido por",
-      footer: "Land Adaptive Capacity Index · MRV · Os valores apresentados resultam apenas de registos validados.",
-      pdfTitle: "Relatório do Land Adaptive Capacity Index (LRI)", pdfGenerated: "Gerado em", pdfFilters: "Filtros", pdfPage: "Página",
+      footer: "Land Resilience Index · MRV · Os valores apresentados resultam apenas de registos validados.",
+      pdfTitle: "Relatório do Land Resilience Index (LRI)", pdfGenerated: "Gerado em", pdfFilters: "Filtros", pdfPage: "Página",
       pdfCharts: "Gráficos", generating: "A gerar…",
       sheetSummary: "Resumo", sheetPillars: "Pilares", sheetInd: "Indicadores", sheetSub: "Sub-indicadores", sheetRec: "Registos", sheetHeat: "Mapa de calor",
       methodHtml: `
@@ -90,19 +90,19 @@
 </ul>`
     },
     en: {
-      appName: "Land Adaptive Capacity Index", appSub: "MRV platform",
+      appName: "Land Resilience Index", appSub: "MRV platform",
       navDocs: "Documents", docsTitle: "Methodological documents", docsIntro: "LRI handbooks, guides and other reference documents to read and download.",
       docsPages: "pp.", docsOpen: "Open", docsNone: "No documents found.", docsError: "Could not load the document list.", methodDocs: "See methodological documents to download →",
       navDashboard: "Dashboard", navTech: "Technical Area", navSubmit: "Data submission", navValidate: "Validation",
       navAbout: "About LRI", aboutTitle: "About LRI",
       aboutGoalH: "Purpose of the platform",
-      aboutGoalP: "This platform supports the Monitoring, Reporting and Verification (MRV) of the Land Adaptive Capacity Index (LRI). It gathers the data collected in the field in the districts of Bárue and Vanduzi (Manica, Mozambique), but this one is still prepared to receive LRI information from other districts, validates it and presents the state of landscape Adaptive Capacity publicly and transparently, using validated data only.",
-      aboutWhatP: "The LRI summarises the state of the landscape in a value from 1 to 4, organised in three pillars (Land, Water and Adaptive Capacity) and 17 indicators.",
+      aboutGoalP: "This platform supports the Monitoring, Reporting and Verification (MRV) of the Land Resilience Index (LRI). It gathers the data collected in the field in the districts of Bárue and Vanduzi (Manica, Mozambique), but this one is still prepared to receive LRI information from other districts, validates it and presents the state of landscape Adaptative Capacity publicly and transparently, using validated data only.",
+      aboutWhatP: "The LRI summarises the state of the landscape in a value from 1 to 4, organised in three pillars (Land, Water and Adaptative Capacity) and 17 indicators.",
       aboutFlowH: "From the field to the Dashboard",
       af1: "Collection", af1d: "Survey123 form, no login", af2: "Layer", af2d: "ArcGIS Online: every record enters Pending", af3: "Validation", af3d: "Technician with login validates or rejects",
       af4: "Calculation", af4d: "Validated records only; LRI computed in the browser", af5: "Dashboard", af5d: "Cards, map, charts, PDF and Excel",
       aboutFlowHtml: `<p>Data is collected through a public Survey123 form and stored in ArcGIS Online (Feature Service). Every new record enters as Pending (“Não Validado”). A technician, signed in to the ArcGIS Experience, sets it to Validated or Rejected. This dashboard reads only Validated records; pending or rejected records never reach the charts, tables or the LRI calculation.</p>`,
-      aboutMethH: "Methodology", aboutPolH: "Alignment with national policies", aboutPolHtml: `<p>The LRI is linked to the main national policy instruments. The table shows which pillar and indicators each instrument is most closely associated with.</p><div class="table-wrap"><table class="data pol"><thead><tr><th class="wrap">Instrument</th><th class="wrap">Main pillar</th><th class="wrap">LRI indicators</th><th class="wrap">Link</th></tr></thead><tbody><tr><td class="wrap"><strong>PEDSA II</strong></td><td class="wrap">Adaptive Capacity</td><td class="wrap">11 Sustainable Land Management; 12 Productivity; 14 Household poverty; 15 Ground cover</td><td class="wrap">Agricultural productivity, sustainable practices and household income. In Land, through soil fertility and carbon (4 and 3).</td></tr><tr><td class="wrap"><strong>National Adaptation Plan</strong></td><td class="wrap">Adaptive Capacity</td><td class="wrap">13 Extreme weather events; 17 Perception of shocks and pressures; 11 Sustainable Land Management; 9 Landscape water availability</td><td class="wrap">Exposure to and perception of climate shocks, and practices that reduce vulnerability.</td></tr><tr><td class="wrap"><strong>Biodiversity Strategy</strong></td><td class="wrap">Land</td><td class="wrap">1 and 2 Above- and below-ground biodiversity; 16 Landscape biodiversity; 3 Carbon stocks; 15 Ground cover</td><td class="wrap">State of biodiversity and ecosystems.</td></tr><tr><td class="wrap"><strong>National Water Policy</strong></td><td class="wrap">Water</td><td class="wrap">5, 8 and 9 Water availability and access; 6, 7 and 10 Water quality</td><td class="wrap">Water availability, access and quality across the landscape.</td></tr></tbody></table></div>`, aboutPlatH: "Where to find what",
+      aboutMethH: "Methodology", aboutPolH: "Alignment with national policies", aboutPolHtml: `<p>The LRI is linked to the main national policy instruments. The table shows which pillar and indicators each instrument is most closely associated with.</p><div class="table-wrap"><table class="data pol"><thead><tr><th class="wrap">Instrument</th><th class="wrap">Main pillar</th><th class="wrap">LRI indicators</th><th class="wrap">Link</th></tr></thead><tbody><tr><td class="wrap"><strong>PEDSA II</strong></td><td class="wrap">Adaptative Capacity</td><td class="wrap">11 Sustainable Land Management; 12 Productivity; 14 Household poverty; 15 Ground cover</td><td class="wrap">Agricultural productivity, sustainable practices and household income. In Land, through soil fertility and carbon (4 and 3).</td></tr><tr><td class="wrap"><strong>National Adaptation Plan</strong></td><td class="wrap">Adaptative Capacity</td><td class="wrap">13 Extreme weather events; 17 Perception of shocks and pressures; 11 Sustainable Land Management; 9 Landscape water availability</td><td class="wrap">Exposure to and perception of climate shocks, and practices that reduce vulnerability.</td></tr><tr><td class="wrap"><strong>Biodiversity Strategy</strong></td><td class="wrap">Land</td><td class="wrap">1 and 2 Above- and below-ground biodiversity; 16 Landscape biodiversity; 3 Carbon stocks; 15 Ground cover</td><td class="wrap">State of biodiversity and ecosystems.</td></tr><tr><td class="wrap"><strong>National Water Policy</strong></td><td class="wrap">Water</td><td class="wrap">5, 8 and 9 Water availability and access; 6, 7 and 10 Water quality</td><td class="wrap">Water availability, access and quality across the landscape.</td></tr></tbody></table></div>`, aboutPlatH: "Where to find what",
       aboutPlat: `<ul><li><a href="#dashboard">Dashboard</a>: LRI results, from validated data only.</li><li><a href="#documentos">Documents</a>: methodological handbooks and guides.</li><li><a href="#tecnica/submissao">Technical</a>: data submission and validation (partly restricted access).</li></ul>`,
       secQuality: "Data quality", qualityLink: "See the methodology in About LRI",
       skip: "Skip to content",
@@ -153,8 +153,8 @@
       openNew: "Open in new window", embedHint: "If the form does not load here (third-party cookies blocked by your browser), use “Open in new window”.",
       statusCounts: "Record status in the database",
       devBy: "Developed by",
-      footer: "Land Adaptive Capacity Index · MRV · Figures shown come from validated records only.",
-      pdfTitle: "Land Adaptive Capacity Index (LRI) report", pdfGenerated: "Generated on", pdfFilters: "Filters", pdfPage: "Page",
+      footer: "Land Resilience Index · MRV · Figures shown come from validated records only.",
+      pdfTitle: "Land Resilience Index (LRI) report", pdfGenerated: "Generated on", pdfFilters: "Filters", pdfPage: "Page",
       pdfCharts: "Charts", generating: "Generating…",
       sheetSummary: "Summary", sheetPillars: "Pillars", sheetInd: "Indicators", sheetSub: "Sub-indicators", sheetRec: "Records", sheetHeat: "Heatmap",
       methodHtml: `
@@ -162,7 +162,7 @@
 <ol>
 <li><strong>Sub-indicator score:</strong> the mean value of validated records is converted into a 1–4 score using the classification thresholds defined for each sub-indicator (SUSTAIN LHMI reference file): 1 = Poor, 2 = Moderate, 3 = Good, 4 = Excellent.</li>
 <li><strong>Indicator score:</strong> simple mean of the scores of its sub-indicators with data.</li>
-<li><strong>Pillar score</strong> (Land, Water, Adaptive Capacity): simple mean of the scores of its indicators with data.</li>
+<li><strong>Pillar score</strong> (Land, Water, Adaptative Capacity): simple mean of the scores of its indicators with data.</li>
 <li><strong>Overall LRI:</strong> simple mean of the pillar scores with data.</li>
 </ol>
 <p><strong>LRI classes:</strong> Poor &lt; 1.50 · Moderate 1.50–2.49 · Good 2.50–3.49 · Excellent ≥ 3.50.</p>
