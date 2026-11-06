@@ -17,7 +17,7 @@
   const blScope = () => (S.model && S.model.baseline ? t("blScope") : "");
   const textOn = (k) => (k === "moderate" || k === "good" ? "#1d2a24" : "#fff");
 
-  const S = { valid: [], filters: { year: "", province: "", district: "" }, cross: { pillar: null, cls: null, ind: null }, heat: "district", sub: "", page: 0, q: "", charts: {}, model: null, tableRecs: [] };
+  const S = { valid: [], filters: { year: "", province: "", district: "", institution: "" }, cross: { pillar: null, cls: null, ind: null }, heat: "district", sub: "", page: 0, q: "", charts: {}, model: null, tableRecs: [] };
   window.DASH = { S };
 
   Chart.defaults.font.family = 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif';
@@ -54,8 +54,10 @@
   }
   const later = (fn) => setTimeout(fn, 0);
   const toggleCross = (k, v) => { S.cross[k] = S.cross[k] === v ? null : v; S.page = 0; later(render); };
+  // registos visíveis = validados, filtrados pela instituição escolhida
+  const vset = () => (S.filters.institution ? S.valid.filter((r) => (r.institution || "").trim() === S.filters.institution) : S.valid);
   const toggleFilter = (k, v) => { S.filters[k] = String(S.filters[k]) === String(v) ? "" : v; S.page = 0; later(render); };
-  const clearCross = () => { S.cross = { pillar: null, cls: null, ind: null }; S.filters.year = ""; S.filters.district = ""; S.page = 0; later(render); };
+  const clearCross = () => { S.cross = { pillar: null, cls: null, ind: null }; S.filters.year = ""; S.filters.district = ""; S.filters.institution = ""; S.page = 0; later(render); };
 
   function mk(id, cfg, label) {
     if (S.charts[id]) { try { S.charts[id].destroy(); } catch (e) {} }
@@ -72,11 +74,13 @@
 
   // ---------------------------------------------------------------- filtros
   function fillFilters(m) {
-    const ys = $("f-year"), ds = $("f-district"), ps = $("f-province");
+    const ys = $("f-year"), ds = $("f-district"), ps = $("f-province"), is = $("f-institution");
     const opt = (v, l, sel) => `<option value="${esc(v)}"${sel ? " selected" : ""}>${esc(l)}</option>`;
     ys.innerHTML = opt("", t("fAll"), !S.filters.year) + m.years.map((y) => opt(y, y, String(S.filters.year) === String(y))).join("");
     ps.innerHTML = opt("", t("fAll"), !S.filters.province) + m.provinces.map((p) => opt(p, p, S.filters.province === p)).join("");
     ds.innerHTML = opt("", t("fAll"), !S.filters.district) + m.districts.map((d) => opt(d, d, S.filters.district === d)).join("");
+    const insts = [...new Set(S.valid.map((r) => (r.institution || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    is.innerHTML = opt("", t("fAllF"), !S.filters.institution) + insts.map((x) => opt(x, x, S.filters.institution === x)).join("");
   }
 
   // ------------------------------------------------------------------- KPIs
@@ -395,6 +399,7 @@
     const fns = [];
     if (F.year) chip(t("fYear"), F.year, () => toggleFilter("year", F.year));
     if (F.district) chip(t("fDistrict"), F.district, () => toggleFilter("district", F.district));
+    if (F.institution) chip(t("fInstitution"), F.institution, () => toggleFilter("institution", F.institution));
     if (X.pillar) chip(t("pillar"), pname(X.pillar), () => toggleCross("pillar", X.pillar));
     if (X.cls) chip(t("classCol"), cname(X.cls), () => toggleCross("cls", X.cls));
     if (X.ind) { const ind = C.IND.find((i) => i.n === X.ind); chip(t("indicator"), `${ind.n}. ${short(iname(ind), 40)}`, () => toggleCross("ind", X.ind)); }
@@ -406,9 +411,9 @@
 
   // --------------------------------------------------------------------- tudo
   function render() {
-    const m = L.build(S.valid, S.filters);
+    const m = L.build(vset(), S.filters);
     S.model = m; applyCross(m); m.inst = instStats();
-    S.tableRecs = S.valid.filter((r) => (!S.filters.year || String(r.year) === String(S.filters.year)) && (!S.filters.province || r.province === S.filters.province) && (!S.filters.district || r.district === S.filters.district));
+    S.tableRecs = vset().filter((r) => (!S.filters.year || String(r.year) === String(S.filters.year)) && (!S.filters.province || r.province === S.filters.province) && (!S.filters.district || r.district === S.filters.district));
     if (S.cross.pillar || S.cross.cls || S.cross.ind) { const ok = new Set(m.main.inds.map((i) => i.ind.n)); S.tableRecs = S.tableRecs.filter((r) => r.ind && ok.has(r.ind.n)); }
     fillFilters(m); renderXbar(); renderKpis(m); renderInterp(m); renderCharts(m); renderTables(m); renderHeat(m); renderRecords(); renderQuality(m);
     window.dispatchEvent(new Event("lri-render"));
@@ -424,6 +429,7 @@
     });
     $("f-year").onchange = (e) => { S.filters.year = e.target.value; S.page = 0; render(); };
     $("f-province").onchange = (e) => { S.filters.province = e.target.value; S.filters.district = ""; S.page = 0; render(); };
+    $("f-institution").onchange = (e) => { S.filters.institution = e.target.value; S.filters.district = ""; S.page = 0; render(); };
     $("f-district").onchange = (e) => { S.filters.district = e.target.value; S.page = 0; render(); };
     $("f-sub").onchange = (e) => { S.sub = e.target.value; renderHist(S.model); };
     $("rec-search").oninput = (e) => { S.q = e.target.value; S.page = 0; renderRecords(); };
@@ -439,6 +445,7 @@
   window.DASH.heatData = heatData;
   window.DASH.recRows = recRows;
   window.DASH.toggleFilter = toggleFilter;
+  window.DASH.visible = vset;
   window.DASH.toggleCross = toggleCross;
   bind();
   window.addEventListener("lri-lang", () => { if (S.model) render(); });

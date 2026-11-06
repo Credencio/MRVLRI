@@ -50,6 +50,8 @@
           <select id="f-province"></select></label>
         <label><span data-i18n="fDistrict">Distrito</span>
           <select id="f-district"></select></label>
+        <label><span data-i18n="fInstitution">Instituição</span>
+          <select id="f-institution"></select></label>
       </div>
       <div class="actions">
         <span class="muted small" id="updated"></span>
@@ -74,6 +76,7 @@
           <div class="map-wrap"><div id="map-svg" class="map-svg"></div><div id="map-tip" class="map-tip" hidden></div></div>
           <aside class="map-panel">
             <ul id="map-legend" class="map-legend"></ul>
+            <label class="map-pts"><input type="checkbox" id="map-pts-toggle" checked> <span data-i18n="mapPoints">Mostrar pontos de recolha</span></label>
             <div id="map-card" class="map-card"></div>
             <h4 data-i18n="mapList">Distritos com dados</h4>
             <div id="map-list" class="map-list"></div>
@@ -227,7 +230,8 @@
 
     <article class="card full embed" id="pane-submissao">
       <div class="card-head"><div><h3 data-i18n="submitHead"></h3><p class="muted small" data-i18n="submitDesc"></p></div>
-        <a class="btn" id="open-survey" target="_blank" rel="noopener" href="#" data-i18n="openNew">Abrir em nova janela</a></div>
+        <div class="btns"><a class="btn" id="open-survey" target="_blank" rel="noopener" href="#" data-i18n="openNew">Abrir em nova janela</a>
+        <a class="btn alt" id="open-app" target="_blank" rel="noopener" href="#" data-i18n="openApp">Submeter via aplicação de campo</a></div></div>
       <iframe id="frame-survey" title="Survey123" loading="lazy" allow="geolocation; camera" referrerpolicy="strict-origin-when-cross-origin"></iframe>
       <p class="muted small" data-i18n="embedHint"></p>
     </article>

@@ -163,3 +163,10 @@ python3 tools/baseline_to_js.py baseline_novo.xlsx --districts "Gondola,Manica" 
 ```
 
 O Excel tem de seguir o mesmo modelo da folha original (mesma ordem de indicadores; o script pára com erro se não coincidir). Um grupo com os mesmos distritos é substituído, os outros mantêm-se. Os nomes têm de ser iguais aos da camada do ArcGIS. Depois basta publicar o ficheiro `data/baseline.js` no GitHub.
+
+## Notas da versão: coordenadas, instituição e aplicação de campo
+- **Mapa:** além de pintar o distrito, mostra um ponto por registo, na posição da pergunta `geopoint` (`location_gps`) do Survey123. Os pontos seguem os filtros do painel e têm um interruptor «Mostrar pontos de recolha». Registos sem coordenadas continuam a contar para o distrito.
+- **Filtro de instituição** no Dashboard (campo `instituicao`, em `config.js`).
+- **Excel/CSV:** duas colunas novas, Latitude e Longitude.
+- **Aba Técnica → Submissão:** botão «Submeter via aplicação de campo». O link está em `js/app.js`; pode ser mudado com `fieldAppUrl` em `config.js`.
+- `config.js` e `catalog.js` não foram alterados nesta versão.

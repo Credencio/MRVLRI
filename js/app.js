@@ -10,6 +10,8 @@
   // ---- links dos iframes (vêm de config.js)
   $("open-survey").href = CFG.surveyUrl;
   $("open-exp").href = CFG.experienceUrl;
+  // aplicação de campo Survey123 (abre a app instalada no telemóvel); pode ser mudado em config.js com fieldAppUrl
+  $("open-app").href = CFG.fieldAppUrl || "https://survey123.arcgis.app/?itemID=e582f1eafa404ce8b70e5dbc8ec20e56";
   // submissão em tabela (item ArcGIS Online, área restrita: não pode ser embebido, abre noutra janela)
   $("tab-tabela").href = CFG.tableUrl || "https://fndsmoz.maps.arcgis.com/home/item.html?id=587a6421a972400aa48c88993611042c#overview";
   const frames = { survey: false, exp: false };

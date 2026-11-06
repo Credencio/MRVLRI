@@ -251,3 +251,10 @@ table.blt{width:100%}table.blt td.num,table.blt th.num{text-align:right}
 @media (max-width:900px){.flow.five{grid-template-columns:1fr 1fr}}
 @media (max-width:520px){.flow.five{grid-template-columns:1fr}}
 @media (max-width:560px){.nav{flex-wrap:wrap;margin-left:0}.nav a{padding:7px 11px;font-size:14px}}
+
+/* botões do cabeçalho de submissão */
+.card-head .btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn.alt{background:#fff;color:var(--brand,#14352B);border:1.5px solid var(--brand,#14352B)}
+.map-pts{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:0 0 10px;cursor:pointer}
+.mp{cursor:pointer}.mp:hover{stroke:#1d2a24}
+.map-legend i.dot{border-radius:50%;background:#555;width:10px;height:10px}

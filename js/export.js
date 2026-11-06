@@ -13,7 +13,7 @@
     if (X.pillar) ex.push(`${t("pillar")}: ${iname((C.PILLARS.find((p) => p.id === X.pillar) || {}))}`);
     if (X.cls) ex.push(`${t("classCol")}: ${t(X.cls)}`);
     if (X.ind) { const i = C.IND.find((q) => q.n === X.ind); if (i) ex.push(`${t("indicator")}: ${i.n}. ${iname(i)}`); }
-    return `${t("fYear")}: ${f.year || t("fAll")} | ${t("fProvince")}: ${f.province || t("fAll")} | ${t("fDistrict")}: ${f.district || t("fAll")}` + (ex.length ? " | " + ex.join(" | ") : "");
+    return `${t("fYear")}: ${f.year || t("fAll")} | ${t("fProvince")}: ${f.province || t("fAll")} | ${t("fDistrict")}: ${f.district || t("fAll")}` + (f.institution ? ` | ${t("fInstitution")}: ${f.institution}` : "") + (ex.length ? " | " + ex.join(" | ") : "");
   };
   // jsPDF (Helvetica/WinAnsi) não tem alguns símbolos
   const clean = (s) => String(s == null ? "" : s).replace(/≥/g, ">=").replace(/≤/g, "<=").replace(/[▲▼⚠→]/g, "").replace(/[^\x00-\xFF–—‘’“”…•]/g, "");
@@ -27,9 +27,9 @@
   // --------------------------------------------------------------- tabelas base
   function recordRows() {
     const rows = D.S.tableRecs;
-    const head = [t("id"), t("province"), t("district"), t("pillar"), t("indicator"), t("subIndicator"), t("value"), t("unit"), t("scoreCol"), t("classCol"), t("source"), t("season"), t("collectDate"), t("submitDate"), t("institution"), t("year"), t("status")];
+    const head = [t("id"), t("province"), t("district"), t("pillar"), t("indicator"), t("subIndicator"), t("value"), t("unit"), t("scoreCol"), t("classCol"), t("source"), t("season"), t("collectDate"), t("submitDate"), t("institution"), t("year"), t("status"), t("lat"), t("lon")];
     const body = rows.map((r) => [r.id, r.province, r.district, r.pillar ? I.pick(C.PILLARS.find((p) => p.id === r.pillar)) : "", r.ind ? iname(r.ind) : r.indicatorRaw, r.sub ? iname(r.sub) : r.subRaw,
-      r.value, r.sub ? r.sub.unit : "", r.score == null ? "" : r.score, r.cls ? t(r.cls) : "", r.source, r.season, I.fmtDate(r.collectDate), I.fmtDate(r.submitDate), r.institution, r.year || "", t("validated")]);
+      r.value, r.sub ? r.sub.unit : "", r.score == null ? "" : r.score, r.cls ? t(r.cls) : "", r.source, r.season, I.fmtDate(r.collectDate), I.fmtDate(r.submitDate), r.institution, r.year || "", t("validated"), r.lat == null ? "" : +r.lat.toFixed(6), r.lon == null ? "" : +r.lon.toFixed(6)]);
     return { head, body };
   }
 
@@ -64,7 +64,7 @@
     const hd = D.heatData(m, "district");
     add(t("sheetHeat"), [[t("indicator") + " / " + t("subIndicator")].concat(hd.cols.map((c) => (c.total ? t("total") : c.label)))].concat(hd.rows.map((r) => [(r.type === "sub" ? "   " + iname(r.sub) : r.ind.n + ". " + iname(r.ind))].concat(r.cells.map((c) => (c ? +c.score.toFixed(3) : ""))))), [60]);
     const rr = recordRows();
-    add(t("sheetRec"), [rr.head].concat(rr.body), [8, 12, 12, 12, 45, 50, 10, 10, 9, 11, 12, 10, 13, 13, 16, 7, 11]);
+    add(t("sheetRec"), [rr.head].concat(rr.body), [8, 12, 12, 12, 45, 50, 10, 10, 9, 11, 12, 10, 13, 13, 16, 7, 11, 11, 11]);
     XLSX.writeFile(wb, `LRI_${I.lang}_${stamp()}.xlsx`);
   }
 

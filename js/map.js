@@ -23,7 +23,7 @@
     f.bb = [x0, y0, x1, y1];
   });
 
-  const M = { sel: null, items: [], fmap: new Map(), vb: null };
+  const M = { sel: null, items: [], fmap: new Map(), vb: null, pts: true, pr: [], noGps: 0 };
   const dName = (f) => f.d.replace(/_/g, " ").toLowerCase().replace(/(^|\s|-)\S/g, (c) => c.toUpperCase()).replace(/\b(De|Da|Do)\b/g, (c) => c.toLowerCase());
 
   // liga cada distrito dos dados (nome da camada) a uma feição do shapefile
@@ -36,7 +36,7 @@
 
   function compute() {
     const S = D.S, yr = S.filters.year;
-    const recs = S.valid.filter((r) => r.ind && (!yr || String(r.year) === String(yr)));
+    const recs = (D.visible ? D.visible() : S.valid).filter((r) => r.ind && (!yr || String(r.year) === String(yr)));
     const groups = new Map();
     recs.forEach((r) => { if (!r.district) return; const k = r.district + "|" + (r.province || ""); (groups.get(k) || groups.set(k, []).get(k)).push(r); });
     const byFeat = new Map(); const unmatched = [];
@@ -75,7 +75,25 @@
       const cls = "md" + (has ? " has" : "") + (sel === f ? " sel" : "") + (dim ? " dim" : "");
       return `<path class="${cls}" data-i="${FEATS.indexOf(f)}" d="${f.path}" fill="${fill}" fill-rule="evenodd"/>`;
     }).join("");
-    return { vb, markup: body };
+    return { vb, markup: body + pointsMarkup(vb) };
+  }
+
+  // pontos de recolha (geometria do campo location_gps); seguem os filtros do painel (D.S.tableRecs)
+  function pointsMarkup(vb) {
+    const recs = (D.S.tableRecs || []);
+    M.pr = recs.filter((r) => r.lat != null && r.lon != null);
+    M.noGps = recs.length - M.pr.length;
+    if (!M.pts || !M.pr.length) return "";
+    const rad = Math.max(vb[2] * 0.004, 0.035), sw = rad * 0.25;
+    return `<g class="mpts">` + M.pr.map((r, i) => `<circle class="mp" data-p="${i}" cx="${px(r.lon).toFixed(4)}" cy="${py(r.lat).toFixed(4)}" r="${rad.toFixed(4)}" fill="${r.cls ? L.classColor(r.cls) : "#555"}" stroke="#fff" stroke-width="${sw.toFixed(4)}"/>`).join("") + `</g>`;
+  }
+  const bringFront = (p) => { if (!p || !p.parentNode) return; const g = p.parentNode.querySelector(".mpts"); if (g) p.parentNode.insertBefore(p, g); else p.parentNode.appendChild(p); };
+  const unit = (r) => (r.sub && r.sub.unit ? " " + r.sub.unit : "");
+  function ptHtml(r) {
+    return `<b>${esc(r.ind ? I.pick(r.ind) : r.indicatorRaw)}</b><span class="mt-p">${esc(r.sub ? I.pick(r.sub) : r.subRaw)}</span>`
+      + `<div class="mt-r"><span>${esc(t("value"))}</span><b>${r.value == null ? "–" : f2(r.value)}${esc(unit(r))}</b></div>`
+      + (r.cls ? `<div class="mt-l"><i style="background:${L.classColor(r.cls)}"></i>${esc(t(r.cls))}</div>` : "")
+      + `<div class="mt-n">${esc(r.district)}${r.institution ? " · " + esc(r.institution) : ""}<br>${esc(I.fmtDate(r.collectDate))}<br>${r.lat.toFixed(5)}, ${r.lon.toFixed(5)}</div>`;
   }
 
   const pName = (id) => I.pick(C.PILLARS.find((p) => p.id === id));
@@ -108,7 +126,7 @@
   }
 
   function legendHtml() {
-    return CFG.classes.slice().reverse().map((c) => `<li><i style="background:${c.color}"></i>${esc(t(c.key))}</li>`).join("") + `<li><i style="background:${GREY}"></i>${esc(t("mapNoData"))}</li>`;
+    return CFG.classes.slice().reverse().map((c) => `<li><i style="background:${c.color}"></i>${esc(t(c.key))}</li>`).join("") + `<li><i style="background:${GREY}"></i>${esc(t("mapNoData"))}</li>` + (M.pts && M.pr.length ? `<li><i class="dot"></i>${esc(t("ptLegend"))}</li>` : "");
   }
 
   function select(f) {
@@ -116,7 +134,7 @@
     document.querySelectorAll("#map-svg .md").forEach((p) => p.classList.toggle("sel", FEATS[+p.dataset.i] === f));
     document.querySelectorAll("#map-list .ml-i").forEach((b) => b.classList.toggle("on", FEATS[+b.dataset.i] === f));
     const on = document.querySelector("#map-list .ml-i.on"); if (on && on.scrollIntoView) { const l = $("map-list"); l.scrollTop = on.offsetTop - l.offsetTop - 40; }
-    const p = document.querySelector("#map-svg .md.sel"); if (p && p.parentNode) p.parentNode.appendChild(p);
+    bringFront(document.querySelector("#map-svg .md.sel"));
   }
 
   // dimensiona o SVG com largura/altura explícitas (alguns telemóveis não calculam bem height:auto em SVG)
@@ -142,8 +160,8 @@
     $("map-legend").innerHTML = legendHtml();
     $("map-list").innerHTML = listHtml();
     $("map-card").innerHTML = cardHtml(M.sel);
-    const un = $("map-note"); un.textContent = M.unmatched.length ? t("mapUnmatched") + " " + [...new Set(M.unmatched)].join(", ") : "";
-    const p = document.querySelector("#map-svg .md.sel"); if (p && p.parentNode) p.parentNode.appendChild(p);
+    const un = $("map-note"); un.textContent = (M.unmatched.length ? t("mapUnmatched") + " " + [...new Set(M.unmatched)].join(", ") + ". " : "") + (M.pr.length || M.noGps ? t("mapPointsN") + " " + M.pr.length + (M.noGps ? " (" + M.noGps + " " + t("mapNoGps") + ")" : "") : "");
+    bringFront(document.querySelector("#map-svg .md.sel"));
   }
 
   // clique: filtra o resto do painel pelo distrito (se tiver dados) e mostra o cartão
@@ -160,15 +178,20 @@
       tip.style.left = Math.min(x, r.width - 190) + "px"; tip.style.top = Math.min(y, r.height - 20) + "px";
     };
     host.addEventListener("mousemove", (e) => {
+      const q = e.target.closest && e.target.closest(".mp");
+      if (q && M.pr[+q.dataset.p]) { tip.innerHTML = ptHtml(M.pr[+q.dataset.p]); tip.hidden = false; move(e); return; }
       const p = e.target.closest && e.target.closest(".md");
       if (!p) { tip.hidden = true; return; }
       tip.innerHTML = tipHtml(FEATS[+p.dataset.i]); tip.hidden = false; move(e);
     });
     host.addEventListener("mouseleave", () => (tip.hidden = true));
     host.addEventListener("click", (e) => {
+      const q = e.target.closest && e.target.closest(".mp");
+      if (q && M.pr[+q.dataset.p]) { $("map-card").innerHTML = `<div class="mc-t">${ptHtml(M.pr[+q.dataset.p])}</div>`; return; }
       const p = e.target.closest && e.target.closest(".md"); if (!p) return;
       pick(FEATS[+p.dataset.i]);
     });
+    const tg = $("map-pts-toggle"); if (tg) tg.addEventListener("change", () => { M.pts = tg.checked; render(); });
     $("map-list").addEventListener("click", (e) => {
       const b = e.target.closest(".ml-i"); if (b) pick(FEATS[+b.dataset.i]);
     });
@@ -180,6 +203,7 @@
       const svg = document.querySelector("#map-svg svg"); if (!svg) return res(null);
       const vb = M.vb, w = px_w || 700, h = Math.round((w * vb[3]) / vb[2]);
       const clone = svg.cloneNode(true); clone.setAttribute("width", w); clone.setAttribute("height", h); clone.style.aspectRatio = "";
+      clone.querySelectorAll(".mp").forEach((p) => p.removeAttribute("class"));
       clone.querySelectorAll(".md").forEach((p) => { p.setAttribute("stroke", "#fff"); p.setAttribute("stroke-width", "0.012"); p.removeAttribute("class"); });
       const data = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(clone));
       const im = new Image();

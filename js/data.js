@@ -9,7 +9,7 @@
   };
   const toDate = (v) => (v == null || v === "" ? null : new Date(typeof v === "number" ? v : Date.parse(v)));
 
-  function toRecord(attrs) {
+  function toRecord(attrs, geom) {
     const num = pick(attrs, F.value);
     const cd = toDate(pick(attrs, F.collectDate)), sd = toDate(pick(attrs, F.submitDate));
     const ref = cd || sd;
@@ -25,15 +25,18 @@
       collectDate: cd, submitDate: sd,
       institution: pick(attrs, F.institution) || "",
       statusRaw: pick(attrs, F.status),
-      year: ref && !isNaN(ref) ? ref.getFullYear() : null
+      year: ref && !isNaN(ref) ? ref.getFullYear() : null,
+      lon: null, lat: null
     };
+    // coordenadas do ponto (campo geopoint "location_gps" do Survey123 → geometria da camada, em WGS84)
+    if (geom && isFinite(geom.x) && isFinite(geom.y) && Math.abs(geom.x) <= 180 && Math.abs(geom.y) <= 90 && !(geom.x === 0 && geom.y === 0)) { r.lon = +geom.x; r.lat = +geom.y; }
     r.statusKey = window.LRI.statusKey(r.statusRaw);
     return window.LRI.enrich(r);
   }
 
   async function queryPage(where, offset) {
     const p = new URLSearchParams({
-      where, outFields: "*", returnGeometry: "false", f: "json",
+      where, outFields: "*", returnGeometry: "true", outSR: "4326", f: "json",
       resultOffset: String(offset), resultRecordCount: String(CFG.pageSize), orderByFields: F.id
     });
     const url = `${CFG.featureService}/${CFG.layerId}/query?${p}`;
@@ -52,7 +55,7 @@
     for (let guard = 0; guard < 200; guard++) {
       const j = await queryPage(clause, offset);
       const feats = j.features || [];
-      all = all.concat(feats.map((f) => toRecord(f.attributes)));
+      all = all.concat(feats.map((f) => toRecord(f.attributes, f.geometry)));
       if (!j.exceededTransferLimit || !feats.length) break;
       offset += feats.length;
     }
@@ -82,7 +85,14 @@
     let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     const C = window.LRI_CATALOG, out = [];
     let id = 1;
+    // centro aproximado de cada distrito (do shapefile embebido) para pontos de demonstração
+    const centre = (name) => {
+      const f = (window.LRI_DISTRICTS || []).find((x) => String(x.d).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/_/g, " ") === name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""));
+      if (!f) return null; const pts = f.r.flat(); const n = pts.length;
+      return { x: pts.reduce((s, p) => s + p[0], 0) / n, y: pts.reduce((s, p) => s + p[1], 0) / n };
+    };
     ["Bárue", "Vanduzi"].forEach((d, di) => {
+      const c0 = centre(d);
       [2025, 2026].forEach((y, yi) => {
         C.IND.forEach((ind) => {
           ind.subs.forEach((sub) => {
@@ -95,7 +105,7 @@
               out.push(window.LRI.enrich({
                 id: id++, province: "Manica", district: d, indicatorRaw: ind.pt, subRaw: sub.pt, value: v,
                 source: rnd() < 0.5 ? "Campo" : "Laboratorio", season: rnd() < 0.5 ? "Seca" : "Chuvosa",
-                collectDate: new Date(y, 5 + k, 10), submitDate: new Date(y, 6 + k, 2), institution: "DEMO",
+                collectDate: new Date(y, 5 + k, 10), submitDate: new Date(y, 6 + k, 2), institution: k ? "DEMO B" : "DEMO A", lon: c0 ? c0.x + (rnd() - 0.5) * 0.3 : null, lat: c0 ? c0.y + (rnd() - 0.5) * 0.3 : null,
                 statusRaw: "Validado", statusKey: "validated", year: y
               }));
             }
