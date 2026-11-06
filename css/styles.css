@@ -258,3 +258,5 @@ table.blt{width:100%}table.blt td.num,table.blt th.num{text-align:right}
 .map-pts{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:0 0 10px;cursor:pointer}
 .mp{cursor:pointer}.mp:hover{stroke:#1d2a24}
 .map-legend i.dot{border-radius:50%;background:#555;width:10px;height:10px}
+
+table.pol td,table.pol th{vertical-align:top}table.pol td.wrap:nth-child(3){min-width:260px}
