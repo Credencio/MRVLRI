@@ -19,7 +19,8 @@
   // ---- rotas
   function route() {
     const h = (location.hash || "#sobre").replace(/^#/, "");
-    const [view, tab] = h.split("/");
+    const [path, qs] = h.split("?"); // #dashboard?ano=2025&distrito=Bárue
+    const [view, tab] = path.split("/");
     const tech = view === "tecnica", docs = view === "documentos", dash = view === "dashboard", about = !tech && !docs && !dash;
     $("view-dashboard").hidden = !dash; $("view-tecnica").hidden = !tech; $("view-docs").hidden = !docs; $("view-about").hidden = !about;
     $("nav-dashboard").setAttribute("aria-current", dash ? "page" : "false");
@@ -40,6 +41,7 @@
       if (which === "validacao" && !frames.exp) { $("frame-exp").src = CFG.experienceUrl; frames.exp = true; }
       loadCounts();
     } else if (!loaded && !loading) load();
+    else if (loaded && window.DASH) { if (qs) window.DASH.applyHash(qs); else window.DASH.syncHash(); }
     window.scrollTo(0, 0);
   }
   document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => (location.hash = "#tecnica/" + b.getAttribute("data-tab"))));
@@ -47,16 +49,16 @@
 
   // ---- dados
   function showUpdated() { $("updated").textContent = lastUpdate ? `${t("updated")}: ${lastUpdate.toLocaleString(I.lang === "en" ? "en-GB" : "pt-PT")}` : ""; }
-  async function load() {
+  async function load(force) {
     loading = true;
     $("dash").hidden = true;
     $("state").innerHTML = `<div class="load">${t("loading")}</div>`;
     try {
-      const res = await window.LRI_DATA.loadValidated();
+      const res = await window.LRI_DATA.loadValidated(force === true);
       isDemo = res.demo; loaded = true;
       $("demo-banner").hidden = !isDemo;
       $("state").innerHTML = ""; $("dash").hidden = false;
-      lastUpdate = new Date(); showUpdated();
+      lastUpdate = res.at ? new Date(res.at) : new Date(); showUpdated();
       window.DASH.set(res.records);
     } catch (e) {
       console.error(e);
@@ -64,7 +66,7 @@
       $("btn-retry").onclick = load;
     } finally { loading = false; }
   }
-  $("btn-refresh").onclick = load;
+  $("btn-refresh").onclick = () => load(true);
 
   // ---- contagem por estado (Técnica) — só aparece se a camada expuser todos os estados
   let counts = null;

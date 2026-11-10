@@ -34,9 +34,12 @@
     return window.LRI.enrich(r);
   }
 
-  async function queryPage(where, offset) {
+  // só os campos usados (mais leve); se a camada recusar algum nome, repete-se com "*"
+  const FIELDS = [...new Set(Object.values(F).filter((v) => typeof v === "string" && v))].join(",");
+
+  async function queryPage(where, offset, outFields) {
     const p = new URLSearchParams({
-      where, outFields: "*", returnGeometry: "true", outSR: "4326", f: "json",
+      where, outFields: outFields || "*", returnGeometry: "true", outSR: "4326", f: "json",
       resultOffset: String(offset), resultRecordCount: String(CFG.pageSize), orderByFields: F.id
     });
     const url = `${CFG.featureService}/${CFG.layerId}/query?${p}`;
@@ -48,18 +51,47 @@
   }
 
   // Só carrega registos VALIDADOS — nada de pendentes/rejeitados chega ao dashboard.
-  async function loadValidated() {
+  // cache curto na sessão do navegador (config.js: cacheMinutes, por omissão 10; 0 desliga)
+  const TTL = (CFG.cacheMinutes != null ? +CFG.cacheMinutes : 10) * 60000;
+  const CKEY = "lri_cache_v1";
+  const cacheId = () => [CFG.featureService, CFG.layerId, JSON.stringify(CFG.status.validated)].join("|");
+  function readCache() {
+    if (!(TTL > 0)) return null;
+    try {
+      const j = JSON.parse(sessionStorage.getItem(CKEY) || "null");
+      if (j && j.id === cacheId() && Date.now() - j.t < TTL && Array.isArray(j.f)) return j;
+    } catch (e) {}
+    return null;
+  }
+  function writeCache(f) {
+    if (!(TTL > 0)) return;
+    try { sessionStorage.setItem(CKEY, JSON.stringify({ id: cacheId(), t: Date.now(), f })); }
+    catch (e) { try { sessionStorage.removeItem(CKEY); } catch (_) {} } // sem espaço: segue sem cache
+  }
+
+  // force = true (botão «Atualizar») ignora o cache
+  async function loadValidated(force) {
     if (new URLSearchParams(location.search).get("demo")) return { records: demo(), demo: true };
-    const clause = CFG.status.validated.map((v) => `${F.status}='${String(v).replace(/'/g, "''")}'`).join(" OR ");
-    let all = [], offset = 0;
-    for (let guard = 0; guard < 200; guard++) {
-      const j = await queryPage(clause, offset);
-      const feats = j.features || [];
-      all = all.concat(feats.map((f) => toRecord(f.attributes, f.geometry)));
-      if (!j.exceededTransferLimit || !feats.length) break;
-      offset += feats.length;
+    const hit = force ? null : readCache();
+    let feats, at;
+    if (hit) { feats = hit.f; at = hit.t; }
+    else {
+      const clause = CFG.status.validated.map((v) => `${F.status}='${String(v).replace(/'/g, "''")}'`).join(" OR ");
+      let fields = FIELDS;
+      feats = []; at = Date.now();
+      for (let guard = 0, offset = 0; guard < 200; guard++) {
+        let j;
+        try { j = await queryPage(clause, offset, fields); }
+        catch (e) { if (fields === "*" || offset) throw e; fields = "*"; j = await queryPage(clause, offset, fields); }
+        const page = j.features || [];
+        page.forEach((f) => feats.push({ attributes: f.attributes, geometry: f.geometry ? { x: f.geometry.x, y: f.geometry.y } : null }));
+        if (!j.exceededTransferLimit || !page.length) break;
+        offset += page.length;
+      }
+      writeCache(feats);
     }
-    return { records: all.filter((r) => r.statusKey === "validated"), demo: false };
+    const all = feats.map((f) => toRecord(f.attributes, f.geometry));
+    return { records: all.filter((r) => r.statusKey === "validated"), demo: false, at };
   }
 
   // Contagem por estado (opcional — falha em silêncio se a camada pública só expõe validados)

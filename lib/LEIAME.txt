@@ -1,0 +1,23 @@
+BIBLIOTECAS LOCAIS (opcional, recomendado)
+
+A plataforma precisa de 4 bibliotecas: Chart.js (gráficos), jsPDF e jsPDF-AutoTable (relatório PDF) e SheetJS (Excel).
+Se estes 4 ficheiros estiverem NESTA pasta, o site usa-os e deixa de depender de um servidor externo.
+Se faltar algum, o site carrega-o da internet (CDN), como antes. Nada deixa de funcionar.
+
+Ficheiros esperados nesta pasta:
+  chart.umd.min.js
+  jspdf.umd.min.js
+  jspdf.plugin.autotable.min.js
+  xlsx.full.min.js
+
+Como descarregar (escolha um):
+  Windows : clique com o botão direito em baixar-bibliotecas.ps1 > "Executar com o PowerShell"
+  Mac/Linux: abra o terminal nesta pasta e execute:  sh baixar-bibliotecas.sh
+  À mão   : abra cada link abaixo, guarde o ficheiro com o nome indicado.
+
+  https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js
+  https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js
+  https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js
+  https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
+
+Depois, faça commit desta pasta (lib/) no GitHub junto com o resto do projeto.

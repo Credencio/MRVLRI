@@ -444,6 +444,7 @@
     S.tableRecs = vset().filter((r) => (!S.filters.year || String(r.year) === String(S.filters.year)) && (!S.filters.province || r.province === S.filters.province) && (!S.filters.district || r.district === S.filters.district));
     if (S.cross.pillar || S.cross.cls || S.cross.ind) { const ok = new Set(m.main.inds.map((i) => i.ind.n)); S.tableRecs = S.tableRecs.filter((r) => r.ind && ok.has(r.ind.n)); }
     fillFilters(m); renderXbar(); renderKpis(m); renderInterp(m); renderCharts(m); renderTables(m); renderHeat(m); renderRecords(); renderQuality(m);
+    syncHash();
     window.dispatchEvent(new Event("lri-render"));
   }
 
@@ -468,7 +469,42 @@
     }));
   }
 
-  window.DASH.set = (valid) => { S.valid = valid; render(); };
+  // ---- filtros no endereço: #dashboard?ano=2025&provincia=Manica&distrito=Bárue&instituicao=X&pilar=terra&classe=poor&indicador=3
+  const URL_FILTERS = [["ano", "year"], ["provincia", "province"], ["distrito", "district"], ["instituicao", "institution"]];
+  const URL_CROSS = [["pilar", "pillar"], ["classe", "cls"], ["indicador", "ind"]];
+  function hashQuery() {
+    const p = new URLSearchParams();
+    URL_FILTERS.forEach(([k, s]) => { if (S.filters[s]) p.set(k, S.filters[s]); });
+    URL_CROSS.forEach(([k, s]) => { if (S.cross[s] != null && S.cross[s] !== "") p.set(k, S.cross[s]); });
+    return p.toString();
+  }
+  function syncHash() {
+    if (!/^#dashboard/.test(location.hash)) return;
+    const q = hashQuery(), h = "#dashboard" + (q ? "?" + q : "");
+    if (location.hash !== h) { try { history.replaceState(null, "", location.pathname + location.search + h); } catch (e) {} }
+  }
+  function applyHash(qs, silent) {
+    const p = new URLSearchParams(qs || ""), v = S.valid || [];
+    const has = (get, x) => x != null && x !== "" && v.some((r) => String(get(r)) === x);
+    const f = {
+      year: has((r) => r.year, p.get("ano")) ? p.get("ano") : "",
+      province: has((r) => r.province, p.get("provincia")) ? p.get("provincia") : "",
+      district: has((r) => r.district, p.get("distrito")) ? p.get("distrito") : "",
+      institution: has((r) => (r.institution || "").trim(), p.get("instituicao")) ? p.get("instituicao") : ""
+    };
+    const c = {
+      pillar: C.PILLARS.some((x) => x.id === p.get("pilar")) ? p.get("pilar") : null,
+      cls: CFG.classes.some((x) => x.key === p.get("classe")) ? p.get("classe") : null,
+      ind: C.IND.some((x) => String(x.n) === p.get("indicador")) ? +p.get("indicador") : null
+    };
+    const same = Object.keys(f).every((k) => String(S.filters[k]) === f[k]) && Object.keys(c).every((k) => S.cross[k] === c[k]);
+    if (same) return;
+    Object.assign(S.filters, f); Object.assign(S.cross, c); S.page = 0;
+    if (!silent) render();
+  }
+
+  window.DASH.set = (valid) => { S.valid = valid; applyHash(/^#dashboard/.test(location.hash) ? location.hash.split("?")[1] : "", true); render(); };
+  window.DASH.applyHash = applyHash; window.DASH.syncHash = syncHash;
   window.DASH.render = () => { if (S.valid) render(); };
   window.DASH.heatData = heatData;
   window.DASH.recRows = recRows;
