@@ -27,7 +27,7 @@
     $("nav-docs").setAttribute("aria-current", docs ? "page" : "false");
     $("nav-tecnica").setAttribute("aria-current", tech ? "page" : "false");
     if (about) { window.scrollTo(0, 0); return; }
-    if (docs) { window.LRI_DOCS.load(); window.scrollTo(0, 0); return; }
+    if (docs) { window.LRI_DOCS.load(); if (tab) window.LRI_DOCS.focus(decodeURIComponent(tab)); else window.scrollTo(0, 0); return; }
     if (tech) {
       const which = tab === "validacao" ? "validacao" : "submissao";
       document.querySelectorAll("[data-tab]").forEach((b) => {

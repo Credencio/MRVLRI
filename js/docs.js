@@ -27,7 +27,7 @@
       const meta = [d.language, d.pages ? `${d.pages} ${t("docsPages")}` : "", d.size, d.year].filter(Boolean).map((m) => `<span>${esc(m)}</span>`).join("");
       const by = [d.authors, d.publisher].filter(Boolean).join(" · ");
       const fname = String(d.file).split("/").pop();
-      return `<article class="doc">
+      return `<article class="doc" id="doc-${esc(d.id || "")}" data-id="${esc(d.id || "")}">
         <a class="thumb" href="${esc(d.file)}" target="_blank" rel="noopener" aria-label="${esc(t("docsOpen"))}: ${esc(loc(d.title))}">${d.thumb ? `<img src="${esc(d.thumb)}" alt="" loading="lazy">` : `<span class="pdfico">PDF</span>`}</a>
         <div class="body">
           <span class="tag">${esc(loc(cats[d.category]) || d.category || "")}</span>
@@ -40,7 +40,17 @@
     }).join("") : `<p class="muted">${esc(t("docsNone"))}</p>`;
   }
 
+  // abre um documento da biblioteca pelo id (#documentos/<id>): limpa filtros, desloca e destaca
+  function focus(id) {
+    load(); if (!S.data) return;
+    S.cat = ""; S.q = ""; $("docs-search").value = ""; render();
+    const el = [...document.querySelectorAll("#docs-list .doc")].find((x) => x.getAttribute("data-id") === id);
+    if (!el) { window.scrollTo(0, 0); return; }
+    el.scrollIntoView({ block: "center" });
+    el.classList.add("hl"); setTimeout(() => el.classList.remove("hl"), 2800);
+  }
+
   $("docs-search").oninput = (e) => { S.q = e.target.value; render(); };
   window.addEventListener("lri-lang", render);
-  window.LRI_DOCS = { load };
+  window.LRI_DOCS = { load, focus };
 })();

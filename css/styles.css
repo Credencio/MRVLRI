@@ -265,3 +265,6 @@ table.blt{width:100%}table.blt td.num,table.blt th.num{text-align:right}
 .map-legend i.dot{border-radius:50%;background:#555;width:10px;height:10px}
 
 table.pol td,table.pol th{vertical-align:top}table.pol td.wrap:nth-child(3){min-width:260px}
+
+.doc.hl{outline:3px solid var(--brand2,#2b7a5a);outline-offset:3px;transition:outline-color .6s}
+table.pol td a{font-weight:600}
