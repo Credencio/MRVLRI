@@ -68,7 +68,35 @@
       tp.tooltip = Object.assign({ enabled: true }, tp.tooltip || {});
       S.charts[id] = new Chart(cv, cfg);
     } catch (e) { console.error("LRI chart " + id, e); S.charts[id] = null; }
+    try { attachTable(id, cfg); } catch (e) { console.error("LRI table " + id, e); }
     return S.charts[id];
+  }
+
+  // ---- alternar gráfico ⇄ tabela (a tabela é construída a partir dos mesmos dados do gráfico)
+  const tview = {};
+  function attachTable(id, cfg) {
+    const cv = $(id), wrap = cv.closest(".chart"); if (!wrap) return;
+    const ch = S.charts[id], data = ch && ch.data;
+    const dss = data && data.labels && data.labels.length ? (data.datasets || []).filter((d) => Array.isArray(d.data) && d.data.every((v) => v == null || typeof v === "number")) : [];
+    let bar = wrap.parentNode.querySelector(`.tv-bar[data-for="${id}"]`), box = wrap.parentNode.querySelector(`.tv-box[data-for="${id}"]`);
+    if (!bar) {
+      bar = document.createElement("div"); bar.className = "tv-bar"; bar.dataset.for = id;
+      bar.innerHTML = `<button type="button" class="tv-btn" aria-pressed="false"></button>`;
+      wrap.parentNode.insertBefore(bar, wrap);
+      box = document.createElement("div"); box.className = "tv-box table-wrap"; box.dataset.for = id; box.hidden = true;
+      wrap.parentNode.insertBefore(box, wrap.nextSibling);
+      bar.firstChild.onclick = () => { tview[id] = !tview[id]; attachTable(id, cfg); };
+    }
+    if (!dss.length) { bar.hidden = true; box.hidden = true; wrap.classList.remove("tv-off"); return; }
+    bar.hidden = false;
+    const on = !!tview[id], btn = bar.firstChild;
+    btn.textContent = on ? t("viewChart") : t("viewTable"); btn.setAttribute("aria-pressed", on);
+    wrap.classList.toggle("tv-off", on); box.hidden = !on;
+    const o = (cfg && cfg.options) || {}, xt = o.indexAxis !== "y" && o.scales && o.scales.x && o.scales.x.title && o.scales.x.title.text;
+    const dec = (d) => d.data.some((v) => v != null && !Number.isInteger(v)); // colunas com decimais mostram sempre 2 casas
+    const cell = (v, d) => (v == null || isNaN(v) ? "–" : dec(d) ? I.fmt(v, 2) : String(v));
+    box.innerHTML = `<table class="data tv-tbl"><thead><tr><th class="wrap">${esc(xt || t("tvCategory"))}</th>${dss.map((d) => `<th class="num">${esc(d.label || t("value"))}</th>`).join("")}</tr></thead><tbody>`
+      + data.labels.map((l, i) => `<tr><td class="wrap">${esc(Array.isArray(l) ? l.join(" ") : l)}</td>${dss.map((d) => `<td class="num">${cell(d.data[i], d)}</td>`).join("")}</tr>`).join("") + `</tbody></table>`;
   }
   const empty = (id, on) => { const c = $(id).closest(".chart"); if (c) c.style.opacity = on ? 0.25 : 1; };
 

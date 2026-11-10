@@ -138,6 +138,11 @@ label.inline{display:flex}
 .foot{border-top:1px solid var(--line);padding:18px 0;color:var(--muted);font-size:13px}
 
 /* responsive */
+.tv-bar{display:flex;justify-content:flex-end;margin:-4px 0 8px}
+.tv-btn{font:inherit;font-size:12.5px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink2);cursor:pointer}
+.tv-btn:hover{background:#eef3ef}.tv-btn:focus-visible{outline:2px solid var(--brand,#14352B);outline-offset:2px}
+.chart.tv-off{position:absolute;left:-99999px;width:640px}
+.tv-box{max-height:380px}
 @media (max-width:1100px){.kpis,.interp{grid-template-columns:repeat(2,minmax(0,1fr))}.icard.s3{grid-column:span 2}}
 @media (max-width:860px){
   .grid2{grid-template-columns:1fr}
