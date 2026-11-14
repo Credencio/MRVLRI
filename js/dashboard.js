@@ -74,6 +74,40 @@
 
   // ---- alternar gráfico ⇄ tabela (a tabela é construída a partir dos mesmos dados do gráfico)
   const tview = {};
+  // ---- ferramentas dos gráficos: expandir, descarregar, ver como tabela
+  const ICON = {
+    exp: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>',
+    dl: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 20h14"/></svg>',
+    tb: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h6M14 7h6M4 12h6M14 12h6M4 17h6M14 17h6"/></svg>',
+  };
+  const TOOLS = window.LRI_TOOLS = {
+    html: (noTable) => `<button type="button" class="tb tb-exp" data-i18n-title="tbExpand">${ICON.exp}</button><button type="button" class="tb tb-dl" data-i18n-title="tbDownload">${ICON.dl}</button>${noTable ? "" : `<button type="button" class="tb tv-btn" aria-pressed="false">${ICON.tb}</button>`}`,
+    name: (bar) => (((bar.closest(".card") || {}).querySelector && bar.closest(".card").querySelector("h3, h2")) || { textContent: "grafico" }).textContent.trim().replace(/[^\w\u00C0-\u017F]+/g, "_").slice(0, 60) || "grafico",
+    save(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); },
+    png(cv, name) { if (!cv) return; const c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(cv, 0, 0); c.toBlob((b) => TOOLS.save(b, name + ".png"), "image/png"); },
+    csv(box, name) { const rows = [...box.querySelectorAll("tr")].map((r) => [...r.children].map((c) => '"' + c.textContent.replace(/"/g, '""') + '"').join(";")); TOOLS.save(new Blob(["\ufeff" + rows.join("\r\n")], { type: "text/csv" }), name + ".csv"); },
+    expand(card, getChart) {
+      if (!card) return; const on = !card.classList.contains("expanded");
+      card.classList.toggle("expanded", on); document.body.classList.toggle("has-expanded", on);
+      const ch = getChart && getChart(); if (ch && ch.resize) setTimeout(() => ch.resize(), 60);
+    },
+  };
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const c = document.querySelector(".card.expanded"); if (c) { c.classList.remove("expanded"); document.body.classList.remove("has-expanded"); Object.values(S.charts).forEach((x) => x && x.resize && x.resize()); window.dispatchEvent(new Event("resize")); } } });
+
+  // tabelas: botões de expandir e descarregar (CSV)
+  TOOLS.decorate = () => {
+    document.querySelectorAll(".table-wrap > table[id^='t-'], .blk .table-wrap > table").forEach((tb) => {
+      const wrap = tb.parentNode, card = wrap.closest(".card"); if (!card || wrap.dataset.tools) return;
+      wrap.dataset.tools = "1";
+      const bar = document.createElement("div"); bar.className = "tv-bar tv-tools"; bar.innerHTML = TOOLS.html(true);
+      wrap.parentNode.insertBefore(bar, wrap);
+      bar.querySelector(".tb-exp").onclick = () => TOOLS.expand(card);
+      bar.querySelector(".tb-dl").onclick = () => TOOLS.csv(tb, (card.querySelector("h3, h2") || { textContent: "tabela" }).textContent.trim().replace(/[^\w\u00C0-\u017F]+/g, "_").slice(0, 60) || "tabela");
+      I.apply();
+    });
+  };
+  let decT = 0; new MutationObserver(() => { clearTimeout(decT); decT = setTimeout(TOOLS.decorate, 120); }).observe(document.getElementById("main"), { childList: true, subtree: true });
+
   function attachTable(id, cfg) {
     const cv = $(id), wrap = cv.closest(".chart"); if (!wrap) return;
     const ch = S.charts[id], data = ch && ch.data;
@@ -81,16 +115,18 @@
     let bar = wrap.parentNode.querySelector(`.tv-bar[data-for="${id}"]`), box = wrap.parentNode.querySelector(`.tv-box[data-for="${id}"]`);
     if (!bar) {
       bar = document.createElement("div"); bar.className = "tv-bar"; bar.dataset.for = id;
-      bar.innerHTML = `<button type="button" class="tv-btn" aria-pressed="false"></button>`;
+      bar.innerHTML = TOOLS.html();
       wrap.parentNode.insertBefore(bar, wrap);
       box = document.createElement("div"); box.className = "tv-box table-wrap"; box.dataset.for = id; box.hidden = true;
       wrap.parentNode.insertBefore(box, wrap.nextSibling);
-      bar.firstChild.onclick = () => { tview[id] = !tview[id]; attachTable(id, cfg); };
+      bar.querySelector(".tv-btn").onclick = () => { tview[id] = !tview[id]; attachTable(id, cfg); };
+      bar.querySelector(".tb-exp").onclick = () => TOOLS.expand(bar.closest(".card"), () => S.charts[id]);
+      bar.querySelector(".tb-dl").onclick = () => { if (tview[id]) TOOLS.csv(box, TOOLS.name(bar)); else TOOLS.png($(id), TOOLS.name(bar)); };
     }
     if (!dss.length) { bar.hidden = true; box.hidden = true; wrap.classList.remove("tv-off"); return; }
     bar.hidden = false;
-    const on = !!tview[id], btn = bar.firstChild;
-    btn.textContent = on ? t("viewChart") : t("viewTable"); btn.setAttribute("aria-pressed", on);
+    const on = !!tview[id], btn = bar.querySelector(".tv-btn");
+    btn.title = on ? t("viewChart") : t("viewTable"); btn.setAttribute("aria-label", btn.title); btn.setAttribute("aria-pressed", on); btn.classList.toggle("on", on);
     wrap.classList.toggle("tv-off", on); box.hidden = !on;
     const o = (cfg && cfg.options) || {}, xt = o.indexAxis !== "y" && o.scales && o.scales.x && o.scales.x.title && o.scales.x.title.text;
     const dec = (d) => d.data.some((v) => v != null && !Number.isInteger(v)); // colunas com decimais mostram sempre 2 casas

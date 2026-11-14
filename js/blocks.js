@@ -58,6 +58,13 @@
       art.innerHTML = inner;
     } else {
       art.innerHTML = inner + `<div class="chart"><canvas role="img" aria-label="${esc(L(b.title))}"></canvas></div>`;
+      if (window.LRI_TOOLS) {
+        const bar = document.createElement("div"); bar.className = "tv-bar"; bar.innerHTML = window.LRI_TOOLS.html(true);
+        art.insertBefore(bar, art.querySelector(".chart"));
+        bar.querySelector(".tb-exp").onclick = () => window.LRI_TOOLS.expand(art, () => charts[b.id]);
+        bar.querySelector(".tb-dl").onclick = () => window.LRI_TOOLS.png(art.querySelector("canvas"), window.LRI_TOOLS.name(bar));
+        if (window.I18N) I.apply();
+      }
     }
     return { art, d };
   }
