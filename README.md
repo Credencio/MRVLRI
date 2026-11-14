@@ -187,3 +187,5 @@ Ficheiros novos: `js/admin.js`, `js/motion.js`, `js/preview.js`, `css/admin.css`
 
 ### Gráficos, tabelas e documentos sem programar
 Em «Gestão do site → Gráficos e tabelas» pode esconder gráficos/tabelas/mapa existentes e criar gráficos (barras, linhas, circular, rosca) e tabelas próprias, com dados escritos à mão ou calculados a partir dos registos da plataforma. Em «Documentos», arraste PDF para a zona de carregamento. Ficheiro novo: `js/blocks.js`.
+
+Fotografias: `assets/photos/` (© Credencio Maunze). Fundos e galeria trocam-se em «Gestão do site → Imagens».

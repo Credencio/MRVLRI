@@ -15,6 +15,8 @@
   D.site.contact = D.site.contact || { email: "", location: { pt: "", en: "" }, tagline: { pt: "", en: "" } };
   D.site.texts = D.site.texts || { pt: {}, en: {} };
   D.docs.documents = D.docs.documents || [];
+  D.site.images = D.site.images || { hero: "", contact: "", credit: "", gallery: [] };
+  D.site.images.gallery = D.site.images.gallery || [];
   D.site.blocks = D.site.blocks || { hidden: [], custom: [] };
   D.site.blocks.hidden = D.site.blocks.hidden || []; D.site.blocks.custom = D.site.blocks.custom || [];
   const save = () => ls.set(K_DRAFT, D);
@@ -30,6 +32,19 @@
   const idbOp = async (mode, fn) => { const db = await idb(); return new Promise((res, rej) => { const tx = db.transaction("f", mode), q = fn(tx.objectStore("f")); tx.oncomplete = () => res(q && q.result); tx.onerror = () => rej(tx.error); }); };
   const fPut = (k, b) => idbOp("readwrite", (s) => s.put(b, k)), fGet = (k) => idbOp("readonly", (s) => s.get(k)), fDel = (k) => idbOp("readwrite", (s) => s.delete(k));
 
+  // ---- imagens: reduz no navegador (máx. 1800 px, JPEG) e guarda até à publicação
+  const urlCache = {};
+  function shrink(file, max) {
+    return new Promise((res, rej) => {
+      const u = URL.createObjectURL(file), im = new Image();
+      im.onload = () => { const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement("canvas"); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob((b) => (b ? res(b) : rej(new Error("imagem inválida"))), "image/jpeg", 0.8); };
+      im.onerror = () => rej(new Error("Não foi possível ler a imagem.")); im.src = u;
+    });
+  }
+  async function storeImg(file, max) {
+    const blob = await shrink(file, max), name = "assets/photos/" + slug(file.name.replace(/\.[^.]+$/, "")) + "-" + Date.now().toString(36) + ".jpg";
+    await fPut(name, blob); D.files[name] = { size: blob.size }; urlCache[name] = URL.createObjectURL(blob); return name;
+  }
   // ---- campos editáveis
   const TEXTS = [
     ["appSub", "Subtítulo do cabeçalho", 0], ["aboutGoalH", "Sobre · título «Objetivo»", 0], ["aboutGoalP", "Sobre · objetivo", 1], ["aboutWhatP", "Sobre · o que é o LRI", 1],
@@ -51,7 +66,7 @@
   const slug = (s) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   // ---- secções
-  const SECTIONS = [["resumo", "Início", "🏠"], ["textos", "Textos", "✏️"], ["abas", "Abas e menu", "🧭"], ["graficos", "Gráficos e tabelas", "📊"], ["documentos", "Documentos", "📄"], ["contacto", "Contacto", "✉️"], ["publicar", "Publicar", "🚀"], ["github", "Ligação GitHub", "🔑"]];
+  const SECTIONS = [["resumo", "Início", "🏠"], ["textos", "Textos", "✏️"], ["abas", "Abas e menu", "🧭"], ["graficos", "Gráficos e tabelas", "📊"], ["imagens", "Imagens", "🖼️"], ["documentos", "Documentos", "📄"], ["contacto", "Contacto", "✉️"], ["publicar", "Publicar", "🚀"], ["github", "Ligação GitHub", "🔑"]];
   let cur = "resumo", msg = null;
 
   const views = {
@@ -62,7 +77,7 @@
         <div class="adm-steps"><div class="adm-step"><b class="n">1</b><div><b>Edite</b><br><small class="muted">textos, gráficos, documentos</small></div></div>
           <div class="adm-step"><b class="n">2</b><div><b>Pré-visualize</b><br><small class="muted">veja antes de publicar</small></div></div>
           <div class="adm-step"><b class="n">3</b><div><b>Publique</b><br><small class="muted">um clique e o site atualiza</small></div></div></div>
-        <div class="adm-tiles">${tile("textos", "✏️", "Textos", "PT e EN, em todo o site")}${tile("graficos", "📊", "Gráficos e tabelas", `${nb} criado(s) · esconder os existentes`)}${tile("documentos", "📄", "Documentos", `${n} na biblioteca · arraste um PDF`)}${tile("contacto", "✉️", "Contacto", "email, localização, apresentação")}</div>
+        <div class="adm-tiles">${tile("textos", "✏️", "Textos", "PT e EN, em todo o site")}${tile("graficos", "📊", "Gráficos e tabelas", `${nb} criado(s) · esconder os existentes`)}${tile("imagens", "🖼️", "Imagens", "fundos e galeria de fotos")}${tile("documentos", "📄", "Documentos", `${n} na biblioteca · arraste um PDF`)}${tile("contacto", "✉️", "Contacto", "email, localização, apresentação")}</div>
         <div class="adm-grid"><div class="adm-stat"><b>${dirty() ? "Sim" : "Não"}</b><span>Alterações por publicar</span></div>
           <div class="adm-stat"><b>${g.token ? "Ligado" : "Por ligar"}</b><span>GitHub ${g.owner ? esc(g.owner + "/" + g.repo) : ""}</span></div></div>
         ${g.token ? "" : `<p class="adm-msg info">Para publicar, ligue primeiro o GitHub em «Ligação GitHub».</p>`}`;
@@ -102,6 +117,18 @@
       return `<h1 class="plain">Textos</h1><p class="sub">Altere os textos principais em português e inglês. Deixe vazio para voltar ao original.</p>` +
         TEXTS.map(([k, l, ml]) => `<div class="adm-card"><h3>${esc(l)} <small class="muted">(${k})</small></h3><div class="adm-cols">` +
           ["pt", "en"].map((lg) => (ml ? area : inp)(lg.toUpperCase(), "site", `texts.${lg}.${k}`, (X[lg] && X[lg][k]) != null ? X[lg][k] : B[lg][k], ml ? 4 : undefined)).join("") + `</div></div>`).join("");
+    },
+    imagens() {
+      const I = D.site.images, th = (p) => (urlCache[p] || p || "");
+      const pic = (label, key) => `<div class="adm-pic"><div class="im" style="background-image:url('${esc(th(I[key]))}')"></div><div><b>${label}</b><br><small class="muted">${esc(I[key] || "sem imagem")}${D.files[I[key]] ? " · por publicar" : ""}</small><br><label class="adm-btn sec" style="display:inline-block;margin:8px 0 0;cursor:pointer">Trocar imagem<input type="file" accept="image/*" hidden data-img="${key}"></label></div></div>`;
+      const gal = I.gallery.map((g, i) => `<div class="adm-pic"><div class="im" style="background-image:url('${esc(th(g.src))}')"></div><div style="flex:1">
+          <div class="adm-cols">${inp("Legenda (PT)", "site", `images.gallery.${i}.caption.pt`, g.caption && g.caption.pt)}${inp("Legenda (EN)", "site", `images.gallery.${i}.caption.en`, g.caption && g.caption.en)}</div>
+          <button class="adm-btn red" data-act="delimg" data-i="${i}">Remover</button></div></div>`).join("");
+      return `<h1 class="plain">Imagens</h1><p class="sub">Fundos da página inicial e do Contacto, e a galeria de fotografias da aba Sobre. As fotos são reduzidas automaticamente.</p>
+        <div class="adm-card"><h3>Fundos</h3>${pic("Fundo da página inicial (Sobre)", "hero")}${pic("Fundo da aba Contacto", "contact")}
+        ${inp("Crédito das fotografias", "site", "images.credit", I.credit)}</div>
+        <div class="adm-card"><h3>Galeria</h3>${gal || "<p class='muted'>Sem fotografias.</p>"}
+        <label class="drop" id="dzi" style="margin-top:12px"><span class="big">🖼️</span>Arraste fotografias ou clique para adicionar<input type="file" accept="image/*" multiple data-newimgs></label></div>`;
     },
     documentos() {
       const cats = (D.docs.categories) || {};
@@ -197,6 +224,8 @@
   root.addEventListener("change", async (e) => {
     const el = e.target; if (!el.hasAttribute) return;
     if (el.hasAttribute("data-newdocs") && el.files.length) { await newDocs(el.files); return; }
+    if (el.hasAttribute("data-img") && el.files[0]) { try { D.site.images[el.getAttribute("data-img")] = await storeImg(el.files[0], 1800); save(); render("imagens"); say("ok", "Imagem preparada; será gravada ao publicar."); } catch (er) { say("err", er.message); } return; }
+    if (el.hasAttribute("data-newimgs") && el.files.length) { try { for (const f of Array.from(el.files)) { const n = await storeImg(f, 1200); D.site.images.gallery.push({ src: n, caption: { pt: "", en: "" } }); } save(); render("imagens"); say("ok", "Fotografias adicionadas. Escreva as legendas e publique."); } catch (er) { say("err", er.message); } return; }
     if (!el.hasAttribute("data-file") || !el.files[0]) return;
     const f = el.files[0], i = +el.getAttribute("data-file"), d = D.docs.documents[i];
     if (!/\.pdf$/i.test(f.name)) { say("err", "Só são aceites ficheiros PDF."); return; }
@@ -204,14 +233,16 @@
     if (!d.id) d.id = slug(f.name.replace(/\.pdf$/i, ""));
     save(); render(cur); say("ok", `Ficheiro «${f.name}» preparado (será gravado em ${r.name} ao publicar).`);
   });
-  root.addEventListener("dragover", (e) => { const z = e.target.closest("#dz"); if (z) { e.preventDefault(); z.classList.add("over"); } });
-  root.addEventListener("dragleave", (e) => { const z = e.target.closest("#dz"); if (z) z.classList.remove("over"); });
+  root.addEventListener("dragover", (e) => { const z = e.target.closest("#dz, #dzi"); if (z) { e.preventDefault(); z.classList.add("over"); } });
+  root.addEventListener("dragleave", (e) => { const z = e.target.closest("#dz, #dzi"); if (z) z.classList.remove("over"); });
+  root.addEventListener("drop", async (e) => { const z = e.target.closest("#dzi"); if (z) { e.preventDefault(); const fs = Array.from(e.dataTransfer.files).filter((f) => /^image\//.test(f.type)); for (const f of fs) { const n = await storeImg(f, 1200); D.site.images.gallery.push({ src: n, caption: { pt: "", en: "" } }); } save(); render("imagens"); } });
   root.addEventListener("drop", (e) => { const z = e.target.closest("#dz"); if (z) { e.preventDefault(); newDocs(e.dataTransfer.files); } });
   root.addEventListener("click", async (e) => {
     const b = e.target.closest("[data-act]"); if (!b) return;
     const a = b.getAttribute("data-act");
     if (a === "adddoc") { D.docs.documents.push({ id: "doc-" + Date.now().toString(36), file: "", thumb: "", category: Object.keys(D.docs.categories || {}).filter((k) => k[0] !== "_")[0] || "outro", title: { pt: "", en: "" }, description: { pt: "", en: "" }, authors: "", publisher: "", year: String(new Date().getFullYear()), language: "PT", pages: "", size: "", license: "", _new: true }); save(); render("documentos"); }
     else if (a === "addblk") { D.site.blocks.custom.push({ id: "b" + Date.now().toString(36), kind: "chart", type: "bar", page: "dashboard", source: "manual", visible: true, title: { pt: "", en: "" }, note: { pt: "", en: "" }, data: "Exemplo A;10\nExemplo B;20\nExemplo C;15", _new: true }); save(); render("graficos"); }
+    else if (a === "delimg") { D.site.images.gallery.splice(+b.getAttribute("data-i"), 1); save(); render("imagens"); }
     else if (a === "delblk") { if (confirm("Remover este bloco?")) { D.site.blocks.custom.splice(+b.getAttribute("data-i"), 1); save(); render("graficos"); } }
     else if (a === "deldoc") { if (confirm("Remover este documento da lista?")) { D.docs.documents.splice(+b.getAttribute("data-i"), 1); save(); render("documentos"); } }
     else if (a === "preview") { save(); window.open(location.pathname + "?preview=1#sobre", "_blank"); }

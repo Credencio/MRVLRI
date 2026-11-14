@@ -119,7 +119,29 @@
   });
   window.addEventListener("lri-lang", renderContact);
 
+  // ---- imagens de fundo e galeria (definidas em «Gestão do site → Imagens»)
+  function applyImages() {
+    const IM = (window.LRI_SITE && window.LRI_SITE.images) || {}, root = document.documentElement.style;
+    const abs = (u) => new URL(u, document.baseURI).href;
+    root.setProperty("--hero-img", IM.hero ? `url("${abs(IM.hero)}")` : "none");
+    root.setProperty("--contact-img", IM.contact ? `url("${abs(IM.contact)}")` : "none");
+    const cr = IM.credit ? `${t("photoBy")}: ${IM.credit}` : "";
+    ["hero-credit", "contact-credit"].forEach((id) => { if ($(id)) $(id).textContent = cr; });
+    const g = $("gallery-grid"), list = IM.gallery || [];
+    $("gallery-h").hidden = !list.length;
+    const cap = (c) => (c ? (I.lang === "en" ? c.en || c.pt : c.pt || c.en) : "") || "";
+    g.innerHTML = list.map((x, i) => `<figure class="ph" data-i="${i}" tabindex="0"><img src="${x.src}" alt="${cap(x.caption).replace(/"/g, "&quot;")}" loading="lazy"><figcaption>${cap(x.caption)}${cr ? `<small>${cr}</small>` : ""}</figcaption></figure>`).join("");
+  }
+  document.addEventListener("click", (e) => {
+    const f = e.target.closest && e.target.closest(".ph"); if (!f) return;
+    const img = f.querySelector("img"), ov = document.createElement("div");
+    ov.className = "lightbox"; ov.innerHTML = `<img src="${img.src}" alt=""><p>${f.querySelector("figcaption").innerHTML}</p>`;
+    ov.onclick = () => ov.remove(); document.body.appendChild(ov);
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const o = document.querySelector(".lightbox"); if (o) o.remove(); } });
+  window.addEventListener("lri-lang", applyImages);
+
   I.apply();
-  applyTabs(); renderContact();
+  applyTabs(); renderContact(); applyImages();
   route();
 })();
