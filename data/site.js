@@ -70,9 +70,7 @@ window.LRI_SITE = {
     "custom": []
   },
   "texts": {
-    "pt": {
-      "appSub": "Plataforma de MR"
-    },
+    "pt": {},
     "en": {}
   }
 };
