@@ -170,3 +170,20 @@ O Excel tem de seguir o mesmo modelo da folha original (mesma ordem de indicador
 - **Excel/CSV:** duas colunas novas, Latitude e Longitude.
 - **Aba Técnica → Submissão:** botão «Submeter via aplicação de campo». O link está em `js/app.js`; pode ser mudado com `fieldAppUrl` em `config.js`.
 - `config.js` e `catalog.js` não foram alterados nesta versão.
+
+
+## Gestão do site (#gestao)
+
+Painel escondido: ligação discreta «Gestão do site» no canto inferior direito do rodapé (ou abrir `.../#gestao`).
+Permite editar textos PT/EN, mostrar/esconder abas, gerir documentos (incluindo PDF), contacto e publicar.
+
+- Rascunho guardado só no navegador; **Pré-visualizar** abre o site com `?preview=1`.
+- **Publicar** grava um único commit no GitHub (`data/site.js`, `data/documents.js`, `docs/*.pdf`). O site atualiza em ~1 min.
+- Token: GitHub → Settings → Developer settings → *Fine-grained token*, só para este repositório, permissão *Contents: Read and write*. Fica apenas no `localStorage` do navegador; nunca vai para o repositório.
+- A ligação escondida **não é uma proteção**: quem não tiver o token não consegue publicar.
+- `js/config.js` e `js/catalog.js` não são tocados pela gestão.
+
+Ficheiros novos: `js/admin.js`, `js/motion.js`, `js/preview.js`, `css/admin.css`, `data/site.js`.
+
+### Gráficos, tabelas e documentos sem programar
+Em «Gestão do site → Gráficos e tabelas» pode esconder gráficos/tabelas/mapa existentes e criar gráficos (barras, linhas, circular, rosca) e tabelas próprias, com dados escritos à mão ou calculados a partir dos registos da plataforma. Em «Documentos», arraste PDF para a zona de carregamento. Ficheiro novo: `js/blocks.js`.

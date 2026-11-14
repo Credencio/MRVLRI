@@ -20,14 +20,25 @@
   function route() {
     const h = (location.hash || "#sobre").replace(/^#/, "");
     const [path, qs] = h.split("?"); // #dashboard?ano=2025&distrito=Bárue
-    const [view, tab] = path.split("/");
-    const tech = view === "tecnica", docs = view === "documentos", dash = view === "dashboard", about = !tech && !docs && !dash;
-    $("view-dashboard").hidden = !dash; $("view-tecnica").hidden = !tech; $("view-docs").hidden = !docs; $("view-about").hidden = !about;
+    let [view, tab] = path.split("/");
+    const SITE = window.LRI_SITE || {}, TABS = SITE.tabs || {};
+    const admin = view === "gestao";
+    document.body.classList.toggle("admin-mode", admin);
+    $("view-admin").hidden = !admin;
+    if (admin) {
+      ["view-dashboard", "view-tecnica", "view-docs", "view-about", "view-contact"].forEach((id) => ($(id).hidden = true));
+      window.LRI_ADMIN.render(tab); window.scrollTo(0, 0); return;
+    }
+    // separadores desativados na gestão voltam à página inicial
+    if ((view === "dashboard" && TABS.dashboard === false) || (view === "documentos" && TABS.docs === false) || (view === "tecnica" && TABS.tecnica === false)) { location.replace("#sobre"); return; }
+    const tech = view === "tecnica", docs = view === "documentos", dash = view === "dashboard", contact = view === "contacto", about = !tech && !docs && !dash && !contact;
+    $("view-dashboard").hidden = !dash; $("view-tecnica").hidden = !tech; $("view-docs").hidden = !docs; $("view-about").hidden = !about; $("view-contact").hidden = !contact;
+    $("nav-contact").setAttribute("aria-current", contact ? "page" : "false");
     $("nav-dashboard").setAttribute("aria-current", dash ? "page" : "false");
     $("nav-about").setAttribute("aria-current", about ? "page" : "false");
     $("nav-docs").setAttribute("aria-current", docs ? "page" : "false");
     $("nav-tecnica").setAttribute("aria-current", tech ? "page" : "false");
-    if (about) { window.scrollTo(0, 0); return; }
+    if (about || contact) { window.scrollTo(0, 0); return; }
     if (docs) { window.LRI_DOCS.load(); if (tab) window.LRI_DOCS.focus(decodeURIComponent(tab)); else window.scrollTo(0, 0); return; }
     if (tech) {
       const which = tab === "validacao" ? "validacao" : "submissao";
@@ -78,6 +89,37 @@
   }
   async function loadCounts() { counts = await window.LRI_DATA.loadStatusCounts(); renderCounts(); }
 
+  // ---- separadores visíveis (definido em «Gestão do site»)
+  function applyTabs() {
+    const T = (window.LRI_SITE && window.LRI_SITE.tabs) || {};
+    [["dashboard", "nav-dashboard"], ["docs", "nav-docs"], ["tecnica", "nav-tecnica"]].forEach(([k, id]) => { $(id).hidden = T[k] === false; });
+    document.querySelectorAll("[data-tab-link]").forEach((li) => { li.hidden = T[li.getAttribute("data-tab-link")] === false; });
+  }
+
+  // ---- contacto e sugestões (texto vem de data/site.js)
+  function renderContact() {
+    const C = (window.LRI_SITE && window.LRI_SITE.contact) || {};
+    const pick = (o) => (o ? (I.lang === "en" ? o.en || o.pt : o.pt || o.en) : "") || "";
+    $("contact-tag").textContent = pick(C.tagline);
+    $("contact-loc").textContent = pick(C.location);
+    $("contact-mail").textContent = C.email || ""; const row = $("contact-mail-row"); if (row) row.href = C.email ? "mailto:" + C.email : "#";
+    if ($("sug-type")) document.querySelectorAll("#sug-type option").forEach((o) => { o.textContent = t(o.value); });
+  }
+  $("sug-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const C = (window.LRI_SITE && window.LRI_SITE.contact) || {};
+    const msg = $("sug-msg").value.trim();
+    if (!msg) { $("sug-msg").focus(); $("sug-note").textContent = t("sugErr"); return; }
+    const name = $("sug-name").value.trim();
+    const subject = `[LRI] ${t($("sug-type").value)}`;
+    const org = $("sug-org").value.trim(), em = $("sug-email").value.trim();
+    const body = `${msg}\n\n— ${name || "—"}${org ? " · " + org : ""}${em ? "\n" + em : ""}`;
+    $("sug-note").textContent = t("sugNote");
+    location.href = `mailto:${C.email || ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+  window.addEventListener("lri-lang", renderContact);
+
   I.apply();
+  applyTabs(); renderContact();
   route();
 })();

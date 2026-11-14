@@ -6,6 +6,11 @@
       navDocs: "Documentos", docsTitle: "Documentos metodológicos", docsIntro: "Manuais, guias e outros documentos de referência do LRI para consulta e download.",
       docsPages: "págs.", docsOpen: "Abrir", docsNone: "Nenhum documento encontrado.", docsError: "Não foi possível carregar a lista de documentos.", methodDocs: "Ver documentos metodológicos para descarregar →",
       navDashboard: "Dashboard", navTech: "Área Técnica", navSubmit: "Submissão de dados", navValidate: "Validação",
+      contactH: "Contacto", sugH: "Envie-nos uma sugestão", sugIntro: "Tem uma sugestão, encontrou um erro ou quer propor uma parceria? Escreva-nos — a mensagem abre no seu programa de email.",
+      sugName: "Nome", sugNamePh: "O seu nome", sugOrg: "Organização", sugOrgPh: "Instituição / empresa", sugMsgPh: "Conte-nos um pouco sobre a sua sugestão ou dúvida…", contactHeadA: "Vamos fortalecer a resiliência da paisagem", contactHeadB: "em conjunto.", sugType: "Área de interesse", sugMsg: "Mensagem", sugSend: "Enviar mensagem", sugNote: "Será aberto o seu programa de email, com a mensagem preenchida.", sugErr: "Escreva uma mensagem antes de enviar.",
+      sugT1: "Sugestão de melhoria", sugT2: "Erro ou problema nos dados", sugT3: "Parceria e colaboração", sugT4: "Outro assunto", contactPages: "Páginas", contactEmail: "Email", backTop: "Voltar ao topo", adminLink: "Gestão do site",
+      navContact: "Contacto", contactLocH: "Localização", heroKicker: "Plataforma MRV", heroSub: "Monitoria, Reporte e Verificação da resiliência da paisagem em Bárue e Vanduzi (Manica).", heroCta1: "Abrir o Dashboard", heroCta2: "Ver documentos",
+      cTitle1: "Vamos fortalecer juntos a", cTitle2: "resiliência da paisagem.", cLabName: "Nome", cPhName: "O seu nome", cLabOrg: "Organização", cPhOrg: "Instituição / empresa", cLabMail: "Email", cLabArea: "Área de interesse", cLabMsg: "Mensagem", cPhMsg: "Fale-nos um pouco sobre a sua sugestão ou pedido…", cSend: "Enviar mensagem", sugT5: "Dados e documentos",
       navAbout: "Sobre o LRI", aboutTitle: "Sobre o LRI", viewTable: "Ver como tabela", viewChart: "Ver como gráfico", tvCategory: "Categoria",
       aboutGoalH: "Objetivo da plataforma",
       aboutGoalP: "Esta plataforma apoia a Monitoria, Reporte e Verificação (MRV) do Land Resilience Index (LRI). Reúne os dados recolhidos no terreno nos distritos de Bárue e Vanduzi (Manica, Moçambique), mas esta ainda preparada pra receber informação de LRI de outros distritos, valida-os e apresenta o estado de Capacidade Adaptativa da paisagem de forma pública e transparente, usando apenas dados validados.",
@@ -94,6 +99,11 @@
       navDocs: "Documents", docsTitle: "Methodological documents", docsIntro: "LRI handbooks, guides and other reference documents to read and download.",
       docsPages: "pp.", docsOpen: "Open", docsNone: "No documents found.", docsError: "Could not load the document list.", methodDocs: "See methodological documents to download →",
       navDashboard: "Dashboard", navTech: "Technical Area", navSubmit: "Data submission", navValidate: "Validation",
+      contactH: "Contact", sugH: "Send us a suggestion", sugIntro: "Have a suggestion, found a problem or want to propose a partnership? Write to us — the message opens in your email program.",
+      sugName: "Name", sugNamePh: "Your name", sugOrg: "Organisation", sugOrgPh: "Institution / company", sugMsgPh: "Tell us a little about your suggestion or question…", contactHeadA: "Let's strengthen landscape resilience", contactHeadB: "together.", sugType: "Area of interest", sugMsg: "Message", sugSend: "Send message", sugNote: "Your email program will open with the message filled in.", sugErr: "Please write a message first.",
+      sugT1: "Suggestion", sugT2: "Error or problem", sugT3: "Partnership", sugT4: "Other", contactPages: "Pages", contactEmail: "Email", backTop: "Back to top", adminLink: "Site management",
+      navContact: "Contact", contactLocH: "Location", heroKicker: "MRV platform", heroSub: "Monitoring, Reporting and Verification of landscape resilience in Bárue and Vanduzi (Manica).", heroCta1: "Open the Dashboard", heroCta2: "Browse documents",
+      cTitle1: "Let's strengthen together the", cTitle2: "resilience of the landscape.", cLabName: "Name", cPhName: "Your name", cLabOrg: "Organisation", cPhOrg: "Institution / company", cLabMail: "Email", cLabArea: "Area of interest", cLabMsg: "Message", cPhMsg: "Tell us a little about your suggestion or request…", cSend: "Send message", sugT5: "Data and documents",
       navAbout: "About LRI", aboutTitle: "About LRI", viewTable: "View as table", viewChart: "View as chart", tvCategory: "Category",
       aboutGoalH: "Purpose of the platform",
       aboutGoalP: "This platform supports the Monitoring, Reporting and Verification (MRV) of the Land Resilience Index (LRI). It gathers the data collected in the field in the districts of Bárue and Vanduzi (Manica, Mozambique), but this one is still prepared to receive LRI information from other districts, validates it and presents the state of landscape Adaptive Capacity publicly and transparently, using validated data only.",
@@ -179,6 +189,10 @@
     }
   };
 
+  const BASE = { pt: Object.assign({}, T.pt), en: Object.assign({}, T.en) }; // textos originais (antes das alterações do site.js)
+  const SX = (window.LRI_SITE && window.LRI_SITE.texts) || {};
+  ["pt", "en"].forEach((l) => Object.assign(T[l], SX[l] || {}));
+
   let lang = "pt";
   try { lang = localStorage.getItem("lri_lang") || "pt"; } catch (e) {}
   if (lang !== "pt" && lang !== "en") lang = "pt";
@@ -200,5 +214,5 @@
   }
   function set(l) { lang = l; try { localStorage.setItem("lri_lang", l); } catch (e) {} apply(); window.dispatchEvent(new Event("lri-lang")); }
 
-  window.I18N = { t, pick, cls, fmt, fmtDate, apply, set, get lang() { return lang; } };
+  window.I18N = { base: BASE, t, pick, cls, fmt, fmtDate, apply, set, get lang() { return lang; } };
 })();
