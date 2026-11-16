@@ -18,6 +18,10 @@ window.LRI_DOCUMENTS = {
       "pt": "Estratégias",
       "en": "Strategy"
     },
+	"politica": {
+      "pt": "Políticas",
+      "en": "Politics"
+    },
     "outro": {
       "pt": "Outros",
       "en": "Other"
@@ -196,7 +200,7 @@ window.LRI_DOCUMENTS = {
 	  "id": "politica-nacional-aguas-2016",
 	  "file": "docs/Politica_Nacional_de_Aguas.pdf",
 	  "thumb": "docs/thumbs/Politica_Nacional_de_Aguas.jpg",
-	  "category": "outro",
+	  "category": "politica",
 	  "title": {
 		"pt": "Política Nacional de Águas (Resolução n.º 42/2016)",
 		"en": "National Water Policy (Resolution No. 42/2016)"
