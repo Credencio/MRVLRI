@@ -191,6 +191,27 @@ window.LRI_DOCUMENTS = {
 	  "pages": 38,
 	  "size": "1,1 MB",
 	  "license": ""
+	},
+	{
+	  "id": "politica-nacional-aguas-2016",
+	  "file": "docs/Politica_Nacional_de_Aguas.pdf",
+	  "thumb": "docs/thumbs/Politica_Nacional_de_Aguas.jpg",
+	  "category": "outro",
+	  "title": {
+		"pt": "Política Nacional de Águas (Resolução n.º 42/2016)",
+		"en": "National Water Policy (Resolution No. 42/2016)"
+	  },
+	  "description": {
+		"pt": "Política de Águas de Moçambique: visão, objectivos e políticas principais para a gestão integrada dos recursos hídricos, o abastecimento de água, o saneamento e a redução da vulnerabilidade a cheias e secas (em português).",
+		"en": "Mozambique's water policy: vision, objectives and main policies for integrated water resources management, water supply, sanitation and reduced vulnerability to floods and droughts (in Portuguese)."
+	  },
+	  "authors": "Conselho de Ministros",
+	  "publisher": "Governo de Moçambique (Boletim da República, I Série, 30 de Dezembro de 2016)",
+	  "year": 2016,
+	  "language": "PT",
+	  "pages": 13,
+	  "size": "0,2 MB",
+	  "license": ""
 	}
   ]
 };

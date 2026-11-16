@@ -46,7 +46,60 @@
   }
   const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isNaN(n) ? 0 : n; };
 
+  // ---- texto simples → HTML seguro: **negrito**, _itálico_, [texto](url), listas «- », parágrafos
+  const okUrl = (u) => (/^(https?:\/\/|mailto:|tel:|#|assets\/|docs\/)/i.test(String(u || "").trim()) ? String(u).trim() : "#");
+  function md(txt) {
+    const inl = (x) => esc(x).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(^|\s)_(.+?)_(?=\s|$|[.,;:])/g, "$1<em>$2</em>")
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, a, u) => `<a href="${esc(okUrl(u.replace(/&amp;/g, "&")))}" ${/^https?:/i.test(u) ? 'target="_blank" rel="noopener"' : ""}>${a}</a>`);
+    return String(txt || "").split(/\n\s*\n/).map((par) => {
+      const ls = par.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (ls.length && ls.every((l) => /^[-•*]\s+/.test(l))) return "<ul>" + ls.map((l) => "<li>" + inl(l.replace(/^[-•*]\s+/, "")) + "</li>").join("") + "</ul>";
+      const h = /^(#{1,3})\s+(.*)$/.exec(par.trim());
+      if (h && ls.length === 1) return `<h4>${inl(h[2])}</h4>`;
+      return "<p>" + ls.map(inl).join("<br>") + "</p>";
+    }).join("");
+  }
+  // itens em linhas «a | b | c | d» (PT e EN em paralelo)
+  function items(b) {
+    const P = String((b.items && b.items.pt) || "").split(/\r?\n/).filter((x) => x.trim()), E = String((b.items && b.items.en) || "").split(/\r?\n/).filter((x) => x.trim());
+    const sp = (l) => String(l || "").split("|").map((c) => c.trim());
+    return P.map((l, i) => ({ pt: sp(l), en: sp(E[i] || l) }));
+  }
+  const pickF = (it, i) => ((I.lang === "en" ? it.en[i] || it.pt[i] : it.pt[i] || it.en[i]) || "");
+  function embedUrl(u) {
+    u = String(u || "").trim(); if (!/^https:\/\//i.test(u)) return "";
+    const y = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/.exec(u); if (y) return "https://www.youtube.com/embed/" + y[1];
+    const v = /vimeo\.com\/(\d+)/.exec(u); if (v) return "https://player.vimeo.com/video/" + v[1];
+    return u;
+  }
+  function buildSimple(b) {
+    const art = document.createElement("article"), t = L(b.title), body = md(L(b.body));
+    art.className = "card full blk blk-" + b.kind; art.id = "blk-" + b.id;
+    const head = t ? `<h3>${esc(t)}</h3>` : "";
+    if (b.kind === "text") {
+      const img = b.image ? `<img class="blk-img ${b.imgSide === "left" ? "left" : "right"}" src="${esc(b.image)}" alt="${esc(L(b.imgAlt) || t)}" loading="lazy">` : "";
+      art.className += " prose" + (b.align === "center" ? " ctr" : ""); art.innerHTML = head + (b.image ? `<div class="blk-split ${b.imgSide === "left" ? "rev" : ""}"><div>${body}</div>${img}</div>` : body);
+    } else if (b.kind === "cards") {
+      art.innerHTML = head + (body ? `<div class="prose">${body}</div>` : "") + `<div class="mini-grid">${items(b).map((it) => { const u = pickF(it, 3), tag = u ? "a" : "div"; return `<${tag} class="mini" ${u ? `href="${esc(okUrl(u))}" ${/^http/.test(u) ? 'target="_blank" rel="noopener"' : ""}` : ""}><span class="mi">${esc(it.pt[0] || "")}</span><b>${esc(pickF(it, 1))}</b><span>${esc(pickF(it, 2))}</span></${tag}>`; }).join("")}</div>`;
+    } else if (b.kind === "kpis") {
+      art.innerHTML = head + `<div class="kpi-row">${items(b).map((it) => `<div class="kpi2"><b class="big">${esc(it.pt[0] || "")}</b><span>${esc(pickF(it, 1))}</span></div>`).join("")}</div>`;
+    } else if (b.kind === "image") {
+      art.className += " flush"; art.innerHTML = head + (b.src ? `<figure class="blk-fig"><img src="${esc(b.src)}" alt="${esc(L(b.caption) || t)}" loading="lazy">${L(b.caption) ? `<figcaption>${esc(L(b.caption))}</figcaption>` : ""}</figure>` : "");
+    } else if (b.kind === "embed") {
+      const u = embedUrl(b.url);
+      art.innerHTML = head + (body ? `<div class="prose">${body}</div>` : "") + (u ? `<div class="blk-embed" style="height:${Math.max(200, Math.min(1200, +b.height || 480))}px"><iframe src="${esc(u)}" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"></iframe></div>` : "<p class='muted'>—</p>");
+    } else if (b.kind === "button") {
+      art.className += " ctr"; art.innerHTML = head + (body ? `<div class="prose">${body}</div>` : "") + `<a class="btn" href="${esc(okUrl(b.url))}" ${/^http/.test(b.url || "") ? 'target="_blank" rel="noopener"' : ""}>${esc(L(b.label) || "→")}</a>`;
+    } else if (b.kind === "accordion") {
+      art.innerHTML = head + items(b).map((it) => `<details class="acc"><summary>${esc(pickF(it, 0))}</summary><div>${md(pickF(it, 1))}</div></details>`).join("");
+    } else if (b.kind === "divider") {
+      art.className = "blk-div"; art.innerHTML = t ? `<span>${esc(t)}</span>` : "";
+    }
+    return art;
+  }
+
   function build(b) {
+    if (["text", "cards", "kpis", "image", "embed", "button", "accordion", "divider"].indexOf(b.kind) >= 0) return { art: buildSimple(b), d: null };
     const d = dataset(b), id = "blk-" + b.id;
     const art = document.createElement("article");
     art.className = "card full blk"; art.id = id;
@@ -79,20 +132,24 @@
       options: { responsive: true, maintainAspectRatio: false, indexAxis: type === "hbar" ? "y" : "x", plugins: { legend: { display: round } } },
     });
   }
-  function render() {
+  function render(pageKey) {
     applyHidden();
     const list = (S().blocks && S().blocks.custom) || [];
-    ["dashboard", "sobre"].forEach((pg) => {
-      const host = $("blocks-" + pg); if (!host) return;
+    if (typeof pageKey === "string") render.page = pageKey;
+    const hosts = { dashboard: $("blocks-dashboard"), sobre: $("blocks-sobre"), contacto: $("blocks-contacto"), page: $("blocks-page") };
+    Object.keys(hosts).forEach((pg) => {
+      const host = hosts[pg]; if (!host) return;
       Object.keys(charts).forEach((k) => { const c = charts[k]; if (c && c.canvas && host.contains(c.canvas)) { c.destroy(); delete charts[k]; } });
       host.innerHTML = "";
-      list.filter((b) => (b.page || "dashboard") === pg && b.visible !== false).forEach((b) => {
-        const { art, d } = build(b); host.appendChild(art); draw(art, b, d);
+      const want = pg === "page" ? render.page : pg;
+      list.filter((b) => (b.page || "dashboard") === want && b.visible !== false).forEach((b) => {
+        const { art, d } = build(b); host.appendChild(art); if (d) draw(art, b, d);
       });
     });
+    if (window.I18N) I.apply();
   }
   window.LRI_BLOCKS = { render };
-  window.addEventListener("lri-lang", render);
+  window.addEventListener("lri-lang", () => render());
   if (window.DASH) { const o = window.DASH.set; window.DASH.set = (v) => { o(v); render(); }; }
   render();
 })();

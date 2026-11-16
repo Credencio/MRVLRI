@@ -189,3 +189,7 @@ Ficheiros novos: `js/admin.js`, `js/motion.js`, `js/preview.js`, `css/admin.css`
 Em «Gestão do site → Gráficos e tabelas» pode esconder gráficos/tabelas/mapa existentes e criar gráficos (barras, linhas, circular, rosca) e tabelas próprias, com dados escritos à mão ou calculados a partir dos registos da plataforma. Em «Documentos», arraste PDF para a zona de carregamento. Ficheiro novo: `js/blocks.js`.
 
 Fotografias: `assets/photos/` (© Credencio Maunze). Fundos e galeria trocam-se em «Gestão do site → Imagens».
+
+### Gestão alargada
+Em `#gestao`: páginas novas e ordem do menu (+ ligações externas); blocos (gráfico, tabela, texto, cartões, números, fotografia, vídeo/mapa, botão, perguntas, separador) em qualquer página; todos os textos PT/EN com pesquisa; imagens; documentos e categorias; cores, aviso no topo e título; nomes de pilares/indicadores; ligações de dados (Feature Service, Survey123); contacto; cópia de segurança (.json).
+`js/preview.js` aplica ao portal as ligações e os nomes dos indicadores guardados em `data/site.js` (não altera `config.js` nem `catalog.js`).

@@ -26,12 +26,25 @@
     document.body.classList.toggle("admin-mode", admin);
     $("view-admin").hidden = !admin;
     if (admin) {
-      ["view-dashboard", "view-tecnica", "view-docs", "view-about", "view-contact"].forEach((id) => ($(id).hidden = true));
+      ["view-dashboard", "view-tecnica", "view-docs", "view-about", "view-contact", "view-page"].forEach((id) => ($(id).hidden = true));
       window.LRI_ADMIN.render(tab); window.scrollTo(0, 0); return;
     }
     // separadores desativados na gestão voltam à página inicial
     if ((view === "dashboard" && TABS.dashboard === false) || (view === "documentos" && TABS.docs === false) || (view === "tecnica" && TABS.tecnica === false)) { location.replace("#sobre"); return; }
-    const tech = view === "tecnica", docs = view === "documentos", dash = view === "dashboard", contact = view === "contacto", about = !tech && !docs && !dash && !contact;
+    if (view === "contacto" && TABS.contact === false) { location.replace("#sobre"); return; }
+    const pg = view === "p" ? (SITE.pages || []).find((x) => x.id === tab && x.visible !== false) : null;
+    if (view === "p" && !pg) { location.replace("#sobre"); return; }
+    const tech = view === "tecnica", docs = view === "documentos", dash = view === "dashboard", contact = view === "contacto", about = !tech && !docs && !dash && !contact && !pg;
+    $("view-page").hidden = !pg;
+    if (pg) {
+      $("page-title").textContent = (I.lang === "en" ? pg.title.en || pg.title.pt : pg.title.pt || pg.title.en) || "";
+      ["view-dashboard", "view-tecnica", "view-docs", "view-about", "view-contact"].forEach((id) => ($(id).hidden = true));
+      document.querySelectorAll(".nav a").forEach((a) => a.setAttribute("aria-current", a.dataset.key === "p:" + pg.id ? "page" : "false"));
+      if (window.LRI_BLOCKS) window.LRI_BLOCKS.render("p:" + pg.id);
+      document.title = ((I.lang === "en" ? pg.title.en : pg.title.pt) || pg.title.pt || "") + " · " + baseTitle;
+      window.scrollTo(0, 0); return;
+    }
+    document.title = baseTitle;
     $("view-dashboard").hidden = !dash; $("view-tecnica").hidden = !tech; $("view-docs").hidden = !docs; $("view-about").hidden = !about; $("view-contact").hidden = !contact;
     $("nav-contact").setAttribute("aria-current", contact ? "page" : "false");
     $("nav-dashboard").setAttribute("aria-current", dash ? "page" : "false");
@@ -92,7 +105,7 @@
   // ---- separadores visíveis (definido em «Gestão do site»)
   function applyTabs() {
     const T = (window.LRI_SITE && window.LRI_SITE.tabs) || {};
-    [["dashboard", "nav-dashboard"], ["docs", "nav-docs"], ["tecnica", "nav-tecnica"]].forEach(([k, id]) => { $(id).hidden = T[k] === false; });
+    [["dashboard", "nav-dashboard"], ["docs", "nav-docs"], ["tecnica", "nav-tecnica"], ["contact", "nav-contact"]].forEach(([k, id]) => { $(id).hidden = T[k] === false; });
     document.querySelectorAll("[data-tab-link]").forEach((li) => { li.hidden = T[li.getAttribute("data-tab-link")] === false; });
   }
 
@@ -102,7 +115,13 @@
     const pick = (o) => (o ? (I.lang === "en" ? o.en || o.pt : o.pt || o.en) : "") || "";
     $("contact-tag").textContent = pick(C.tagline);
     $("contact-loc").textContent = pick(C.location);
-    $("contact-mail").textContent = C.email || ""; const row = $("contact-mail-row"); if (row) row.href = C.email ? "mailto:" + C.email : "#";
+    $("contact-mail").textContent = C.email || "";
+    const ex = $("contact-extra");
+    if (ex) {
+      const lab = { phone: t("cxPhone"), website: t("cxWeb"), whatsapp: "WhatsApp", linkedin: "LinkedIn", facebook: "Facebook" };
+      const href = { phone: (v) => "tel:" + v.replace(/\s+/g, ""), website: (v) => okUrl(/^https?:/.test(v) ? v : "https://" + v), whatsapp: (v) => "https://wa.me/" + v.replace(/\D/g, ""), linkedin: (v) => okUrl(v), facebook: (v) => okUrl(v) };
+      ex.innerHTML = Object.keys(lab).filter((k) => C[k]).map((k) => `<a class="chip" href="${href[k](String(C[k]))}" target="_blank" rel="noopener">${lab[k]}</a>`).join("");
+    } const row = $("contact-mail-row"); if (row) row.href = C.email ? "mailto:" + C.email : "#";
     if ($("sug-type")) document.querySelectorAll("#sug-type option").forEach((o) => { o.textContent = t(o.value); });
   }
   $("sug-form").addEventListener("submit", (e) => {
@@ -141,7 +160,50 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") { const o = document.querySelector(".lightbox"); if (o) o.remove(); } });
   window.addEventListener("lri-lang", applyImages);
 
+  // ---- aparência, menu, título, aviso (definidos em «Gestão do site»)
+  const baseTitle = document.title;
+  const pick = (o) => (o ? (I.lang === "en" ? o.en || o.pt : o.pt || o.en) : "") || "";
+  const okUrl = (u) => (/^(https?:\/\/|mailto:|tel:|#)/i.test(String(u || "").trim()) ? u.trim() : "#");
+  function applyTheme() {
+    const T = (window.LRI_SITE && window.LRI_SITE.theme) || {}, r = document.documentElement.style;
+    [["brand", "--brand"], ["brand2", "--brand2"], ["accent", "--accent"], ["bg", "--bg"]].forEach(([k, v]) => { if (T[k]) r.setProperty(v, T[k]); else r.removeProperty(v); });
+    if (T.radius) r.setProperty("--radius", T.radius + "px");
+    document.body.classList.toggle("no-motion", T.motion === false);
+    if (T.motion === false) document.documentElement.classList.remove("js-motion");
+  }
+  function applySeo() {
+    const S = (window.LRI_SITE && window.LRI_SITE.seo) || {};
+    if (pick(S.title)) document.title = pick(S.title);
+    const m = document.querySelector('meta[name="description"]');
+    if (m && pick(S.description)) m.setAttribute("content", pick(S.description));
+  }
+  function applyBanner() {
+    const B = (window.LRI_SITE && window.LRI_SITE.banner) || {}, el = $("site-banner"), txt = pick(B.text);
+    const key = "lri_banner_" + txt;
+    if (!B.on || !txt || sessionStorage.getItem(key)) { el.hidden = true; return; }
+    el.className = "tone-" + (B.tone || "info");
+    el.innerHTML = `<span>${txt.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}${B.url ? ` <a href="${okUrl(B.url)}" ${/^http/.test(B.url) ? 'target="_blank" rel="noopener"' : ""}>${pick(B.linkLabel) || "→"}</a>` : ""}</span><button type="button" aria-label="×">×</button>`;
+    el.querySelector("button").onclick = () => { sessionStorage.setItem(key, "1"); el.hidden = true; };
+    el.hidden = false;
+  }
+  // menu: ordem, páginas novas e ligações externas
+  function applyMenu() {
+    const S = window.LRI_SITE || {}, nav = document.querySelector(".nav");
+    nav.querySelectorAll(".nav-extra").forEach((a) => a.remove());
+    const fixed = { about: "nav-about", dashboard: "nav-dashboard", docs: "nav-docs", tecnica: "nav-tecnica", contact: "nav-contact" };
+    Object.keys(fixed).forEach((k) => { $(fixed[k]).dataset.key = k; });
+    (S.pages || []).filter((p) => p.visible !== false && p.menu !== false).forEach((p) => {
+      const a = document.createElement("a"); a.className = "nav-extra"; a.href = "#p/" + p.id; a.dataset.key = "p:" + p.id; a.textContent = pick(p.title); nav.appendChild(a);
+    });
+    (S.links || []).forEach((l, i) => {
+      const a = document.createElement("a"); a.className = "nav-extra"; a.href = okUrl(l.url); a.dataset.key = "l:" + i; a.textContent = pick(l.label); a.target = "_blank"; a.rel = "noopener"; nav.appendChild(a);
+    });
+    const order = (S.menu && S.menu.order) || [], keys = [...nav.querySelectorAll("a")].map((a) => a.dataset.key);
+    keys.forEach((k, i) => { const j = order.indexOf(k); nav.querySelector(`[data-key="${k}"]`).style.order = j >= 0 ? j : 50 + i; });
+  }
+  window.addEventListener("lri-lang", () => { applyMenu(); applyBanner(); applySeo(); });
+
   I.apply();
-  applyTabs(); renderContact(); applyImages();
+  applyTabs(); applyTheme(); applyMenu(); applyBanner(); applySeo(); renderContact(); applyImages();
   route();
 })();
