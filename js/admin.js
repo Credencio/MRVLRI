@@ -1,5 +1,5 @@
 /* Gestão do site (#gestao). Rascunho guardado neste navegador; "Publicar" grava um único commit no GitHub (API Git Data).
-   O token fica só em localStorage deste navegador — nunca no repositório. */
+   O token fica só em localStorage deste navegador: nunca no repositório. */
 (function () {
   const root = document.getElementById("admin-root");
   const K_DRAFT = "lri_admin_draft", K_GH = "lri_admin_gh", K_BASE = "lri_admin_base";
@@ -164,7 +164,7 @@
     resumo() {
       const g = GH(), n = D.docs.documents.length, nb = D.site.blocks.custom.length, np = D.site.pages.length;
       const tile = (k, ic, t, d) => `<a class="adm-tile" href="#gestao/${k}"><div class="ic">${ic}</div><b>${t}</b><span>${d}</span></a>`;
-      return `<div class="adm-hero"><h1>Olá! Bem-vindo à gestão do portal</h1><p>Mude textos, crie páginas e blocos, carregue documentos e fotografias, ajuste cores e ligações — sem programar.</p></div>
+      return `<div class="adm-hero"><h1>Olá! Bem-vindo à gestão do portal</h1><p>Mude textos, crie páginas e blocos, carregue documentos e fotografias, ajuste cores e ligações: sem programar.</p></div>
         <div class="adm-steps"><div class="adm-step"><b class="n">1</b><div><b>Edite</b><br><small class="muted">páginas, blocos, textos, imagens</small></div></div>
           <div class="adm-step"><b class="n">2</b><div><b>Pré-visualize</b><br><small class="muted">veja antes de publicar</small></div></div>
           <div class="adm-step"><b class="n">3</b><div><b>Publique</b><br><small class="muted">um clique e o site atualiza</small></div></div></div>
@@ -199,7 +199,7 @@
       const list = D.site.blocks.custom.map((b, i) => ({ b, i })).filter((x) => f === "*" || (x.b.page || "dashboard") === f).map(({ b, i }) => {
         const p = `blocks.custom.${i}`, k = b.kind || "chart", T = BLOCK_TYPES[k] || ["📦", k];
         let f2 = "";
-        const body = area("Texto (PT) — **negrito**, _itálico_, [link](https://…), linhas «- » para listas", "site", p + ".body.pt", b.body && b.body.pt, 5) + area("Texto (EN)", "site", p + ".body.en", b.body && b.body.en, 5);
+        const body = area("Texto (PT): **negrito**, _itálico_, [link](https://…), linhas «- » para listas", "site", p + ".body.pt", b.body && b.body.pt, 5) + area("Texto (EN)", "site", p + ".body.en", b.body && b.body.en, 5);
         const itemsF = (hint) => `<p class="muted small">${hint}</p><div class="adm-cols">${area("Itens (PT)", "site", p + ".items.pt", b.items && b.items.pt, 6)}${area("Itens (EN)", "site", p + ".items.en", b.items && b.items.en, 6)}</div>`;
         const imgUp = (field, label) => `<div class="adm-pic"><div class="im" style="background-image:url('${esc(urlCache[b[field]] || b[field] || "")}')"></div><div><b>${label}</b><br><small class="muted">${esc(b[field] || "sem imagem")}</small><br><label class="adm-btn sec" style="display:inline-block;margin:8px 0 0;cursor:pointer">Escolher imagem<input type="file" accept="image/*" hidden data-blkimg="${i}:${field}"></label>${b[field] ? ` <button class="adm-btn sec" data-act="clearimg" data-i="${i}" data-f="${field}">Tirar</button>` : ""}</div></div>`;
         if (k === "chart" || k === "table") {
@@ -208,12 +208,12 @@
           <label>De onde vêm os dados<select ${bind("site", p + ".source")}${rr}>${opt("manual", "Escrevo os dados aqui", b.source || "manual")}${opt("data", "Dados da plataforma (registos validados)", b.source)}</select></label>
           ${b.source === "data" ? `<div class="adm-cols"><label>Agrupar por<select ${bind("site", p + ".group")}>${[["district", "Distrito"], ["institution", "Instituição"], ["year", "Ano"], ["province", "Província"], ["indicatorRaw", "Indicador"]].map(([v, l]) => opt(v, l, b.group || "district")).join("")}</select></label>
             <label>Medida<select ${bind("site", p + ".measure")}>${opt("count", "Número de registos", b.measure || "count")}${opt("mean", "Valor médio", b.measure)}</select></label></div>`
-          : area("Dados — uma linha por item, «Nome;Valor». Nas tabelas, a 1.ª linha pode ser o cabeçalho e pode ter mais colunas.", "site", p + ".data", b.data, 6)}`;
+          : area("Dados: uma linha por item, «Nome;Valor». Nas tabelas, a 1.ª linha pode ser o cabeçalho e pode ter mais colunas.", "site", p + ".data", b.data, 6)}`;
         } else if (k === "text") f2 = body + `<div class="adm-cols"><label>Alinhamento<select ${bind("site", p + ".align")}>${opt("left", "Esquerda", b.align || "left")}${opt("center", "Centrado", b.align)}</select></label><label>Imagem ao lado<select ${bind("site", p + ".imgSide")}>${opt("right", "À direita", b.imgSide || "right")}${opt("left", "À esquerda", b.imgSide)}</select></label></div>` + imgUp("image", "Imagem (opcional)");
         else if (k === "cards") f2 = body + itemsF("Um cartão por linha: <code>ícone | título | texto | ligação</code> (ex.: <code>🌱 | Terra | Solos e biodiversidade | https://…</code>). A ligação é opcional.");
         else if (k === "kpis") f2 = itemsF("Um número por linha: <code>valor | rótulo</code> (ex.: <code>1 200 | agricultores</code>).");
         else if (k === "image") f2 = imgUp("src", "Fotografia") + `<div class="adm-cols">${inp("Legenda (PT)", "site", p + ".caption.pt", b.caption && b.caption.pt)}${inp("Legenda (EN)", "site", p + ".caption.en", b.caption && b.caption.en)}</div>`;
-        else if (k === "embed") f2 = body + inp("Endereço (https://…) — YouTube, Vimeo, mapas ArcGIS, Power BI…", "site", p + ".url", b.url) + inp("Altura (px)", "site", p + ".height", b.height || 480, "number");
+        else if (k === "embed") f2 = body + inp("Endereço (https://…): YouTube, Vimeo, mapas ArcGIS, Power BI…", "site", p + ".url", b.url) + inp("Altura (px)", "site", p + ".height", b.height || 480, "number");
         else if (k === "button") f2 = body + `<div class="adm-cols">${inp("Texto do botão (PT)", "site", p + ".label.pt", b.label && b.label.pt)}${inp("Texto do botão (EN)", "site", p + ".label.en", b.label && b.label.en)}</div>` + inp("Endereço (https://… ou #documentos)", "site", p + ".url", b.url);
         else if (k === "accordion") f2 = itemsF("Uma pergunta por linha: <code>pergunta | resposta</code>.");
         return `<details class="adm-doc" ${b._new ? "open" : ""}><summary>${T[0]} ${esc((b.title && b.title.pt) || T[1])} <small class="muted">· ${T[1]} · ${esc(pageName(b.page || "dashboard"))}${b.visible === false ? " · oculto" : ""}</small></summary>
@@ -267,7 +267,7 @@
       return `<h1 class="plain">Documentos</h1><p class="sub">Adicione, edite ou remova documentos da aba «Documentos». Os PDF são gravados em <code>docs/</code> ao publicar.</p>
         <label class="adm-card drop" id="dz"><span class="big">⬆️</span>Arraste PDF para aqui ou clique para escolher<small class="muted">Cada PDF vira um documento novo; depois preencha o título e a descrição.</small><input type="file" accept="application/pdf" multiple data-newdocs></label>
         <div class="adm-card">${rows || "<p class='muted'>Sem documentos.</p>"}<p class="adm-row"><button class="adm-btn sec" data-act="adddoc">+ Documento sem ficheiro</button><button class="adm-btn sec" data-act="syncdocs">↻ Atualizar com os documentos do site</button></p></div>
-        <div class="adm-card"><h3>Categorias</h3>${Object.keys(D.docs.categories).filter((k) => k[0] !== "_").map((k) => `<div class="adm-cols" style="align-items:end">${inp("Categoria (PT) — " + esc(k), "docs", `categories.${k}.pt`, D.docs.categories[k].pt)}${inp("(EN)", "docs", `categories.${k}.en`, D.docs.categories[k].en)}</div><p style="margin:-4px 0 10px"><button class="adm-btn sec" data-act="delcat" data-k="${esc(k)}">Remover categoria</button></p>`).join("")}<button class="adm-btn sec" data-act="addcat">+ Nova categoria</button></div>`;
+        <div class="adm-card"><h3>Categorias</h3>${Object.keys(D.docs.categories).filter((k) => k[0] !== "_").map((k) => `<div class="adm-cols" style="align-items:end">${inp("Categoria (PT): " + esc(k), "docs", `categories.${k}.pt`, D.docs.categories[k].pt)}${inp("(EN)", "docs", `categories.${k}.en`, D.docs.categories[k].en)}</div><p style="margin:-4px 0 10px"><button class="adm-btn sec" data-act="delcat" data-k="${esc(k)}">Remover categoria</button></p>`).join("")}<button class="adm-btn sec" data-act="addcat">+ Nova categoria</button></div>`;
     },
     aparencia() {
       const T = D.site.theme, B = D.site.banner, SE = D.site.seo, def = { brand: "#1f4d3a", brand2: "#2f6f55", accent: "#9bd3a8", bg: "#f4f2ec" };
@@ -300,7 +300,7 @@
       const f = (k, l, ph) => `<label>${l}<input type="text" ${bind("site", "config." + k)} value="${esc(C[k] || "")}" placeholder="${esc(String(O[k] || ph || "")).slice(0, 110)}"></label>`;
       return `<h1 class="plain">Ligações de dados</h1><p class="sub">Endereços do Feature Service e do Survey123. O que deixar vazio usa o valor original do ficheiro <code>js/config.js</code>.</p>
         <div class="adm-card">${f("featureService", "Feature Service (URL da camada)")}<div class="adm-cols">${f("layerId", "Número da camada (layerId)", "0")}${f("pageSize", "Registos por página", "1000")}</div>
-        ${f("surveyUrl", "Survey123 — formulário (aba Técnica)")}${f("fieldAppUrl", "Survey123 — aplicação de campo")}${f("experienceUrl", "Experience Builder — validação (aba Técnica)")}${f("tableUrl", "Tabela de dados (ArcGIS Online)")}
+        ${f("surveyUrl", "Survey123: formulário (aba Técnica)")}${f("fieldAppUrl", "Survey123: aplicação de campo")}${f("experienceUrl", "Experience Builder: validação (aba Técnica)")}${f("tableUrl", "Tabela de dados (ArcGIS Online)")}
         <p class="adm-msg info">Um endereço errado deixa o Dashboard sem dados. Para voltar ao original, apague o campo. O Dashboard precisa de dados públicos.</p></div>`;
     },
     contacto() {
@@ -449,7 +449,7 @@
     const site = clone(D.site); site.blocks.custom.forEach((x) => delete x._new); site.pages.forEach((x) => delete x._new);
     files.push({ path: "data/site.js", content: "/* Definições do site editáveis em «Gestão do site» (#gestao). Este ficheiro é reescrito ao publicar. */\nwindow.LRI_SITE = " + JSON.stringify(site, null, 2) + ";\n", enc: "utf-8" });
     const docs = clone(D.docs); docs.documents.forEach((d) => delete d._new);
-    files.push({ path: "data/documents.js", content: "/* Lista de documentos da aba \"Documentos\" — editável em «Gestão do site» ou à mão. */\nwindow.LRI_DOCUMENTS = " + JSON.stringify(docs, null, 2) + ";\n", enc: "utf-8" });
+    files.push({ path: "data/documents.js", content: "/* Lista de documentos da aba \"Documentos\": editável em «Gestão do site» ou à mão. */\nwindow.LRI_DOCUMENTS = " + JSON.stringify(docs, null, 2) + ";\n", enc: "utf-8" });
     for (const p of pendingFiles()) { const bl = await fGet(p); if (bl) files.push({ path: p, content: await b64(bl), enc: "base64" }); }
     const ref = await api(g, "GET", `/git/ref/heads/${br}`);
     const head = await api(g, "GET", `/git/commits/${ref.object.sha}`);
