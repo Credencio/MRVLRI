@@ -21,6 +21,10 @@ window.LRI_DOCUMENTS = {
     "outro": {
       "pt": "Outros",
       "en": "Other"
+    },
+    "catmwjgxfgt": {
+      "pt": "Políticas",
+      "en": "politics"
     }
   },
   "documents": [
