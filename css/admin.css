@@ -54,3 +54,11 @@ body.admin-mode{background:#e9efe9}
 .adm-pic{display:flex;gap:16px;align-items:center;padding:10px 0;border-bottom:1px solid #eef1ee}
 .adm-pic .im{width:150px;height:96px;flex:none;border-radius:14px;background:#dde6df center/cover;box-shadow:var(--shadow)}
 @media (max-width:700px){.adm-pic{flex-direction:column;align-items:stretch}.adm-pic .im{width:100%}}
+
+/* menu lateral: rolável e compacto em ecrãs baixos (as últimas opções ficavam fora da caixa verde) */
+.adm-side{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent}
+.adm-side::-webkit-scrollbar{width:6px}.adm-side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:6px}
+.adm-side a,.adm-side button{flex:none}
+.adm-brand{flex:none}
+@media (max-height:860px){.adm-side{padding:12px 10px}.adm-side a,.adm-side button{padding:8px 12px}.adm-brand{padding:6px 10px;margin-bottom:6px}.adm-brand .m{height:28px}.adm-brand .s{height:24px}.adm-brand small{display:none}}
+@media (max-height:700px){.adm-side a,.adm-side button{padding:6px 10px;font-size:14px}}
