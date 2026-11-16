@@ -31,13 +31,54 @@
   }
   normalize(D.site, D.docs); normalize(PUB.site, PUB.docs);
   const sig = (o) => JSON.stringify(o, (k, v) => (k === "_new" ? undefined : v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((x) => [x, v[x]])) : v));
+  const pubSig = sig([PUB.site, PUB.docs]);
+  // O rascunho fica só neste navegador. Se o site publicado mudou entretanto (ex.: um documento acrescentado por ficheiro
+  // ou publicado de outro computador), junta essas novidades ao rascunho em vez de as esconder.
+  (function rebase() {
+    if (D.pub === pubSig) return;
+    let old = null; try { old = D.pubStr ? JSON.parse(D.pubStr) : null; } catch (e) {}
+    if (old) normalize(old[0], old[1]);
+    const oldDocs = old ? Object.fromEntries((old[1].documents || []).map((d) => [d.id, d])) : null;
+    const mine = Object.fromEntries(D.docs.documents.map((d) => [d.id, d])), out = [], added = [];
+    PUB.docs.documents.forEach((pd) => {
+      const d = mine[pd.id];
+      if (d) out.push(oldDocs && oldDocs[pd.id] && sig(oldDocs[pd.id]) === sig(d) ? pd : d);
+      else if (oldDocs && oldDocs[pd.id]) { /* apagado por si no rascunho */ } else { out.push(pd); added.push(pd); }
+    });
+    D.docs.documents.forEach((d) => { if (!PUB.docs.documents.some((pd) => pd.id === d.id) && !(oldDocs && oldDocs[d.id] && sig(oldDocs[d.id]) === sig(d))) out.push(d); });
+    D.docs.documents = out;
+    D.docs.categories = Object.assign({}, PUB.docs.categories, D.docs.categories);
+    if (old && sig(D.site) === sig(old[0])) D.site = clone(PUB.site);
+    D.pub = pubSig; D.pubStr = JSON.stringify([PUB.site, PUB.docs]); D.files = D.files || {};
+    ls.set(K_DRAFT, D);
+    if (added.length) window.__admNotice = "Acrescentei ao rascunho " + added.length + " documento(s) que estavam no site mas não na gestão.";
+  })();
+  // ---- sincronização com o que está publicado: documentos acrescentados à mão (ou por outra pessoa) passam a aparecer aqui
+  const K_PUBSNAP = "lri_admin_pubsnap";
+  function mergePublished() {
+    const prev = ls.get(K_PUBSNAP), ids = (d) => new Set((d.documents || []).map((x) => x.id));
+    const have = ids(D.docs), prevIds = prev ? ids(JSON.parse(prev.docs)) : new Set();
+    let added = 0;
+    PUB.docs.documents.forEach((d) => { if (!have.has(d.id) && (!prev || !prevIds.has(d.id))) { D.docs.documents.push(clone(d)); added++; } });
+    Object.keys(PUB.docs.categories || {}).forEach((k) => { if (D.docs.categories[k] == null) D.docs.categories[k] = clone(PUB.docs.categories[k]); });
+    if (prev) {
+      // documentos alterados no site publicado e não tocados no rascunho
+      const pd = JSON.parse(prev.docs).documents || [];
+      PUB.docs.documents.forEach((d) => { const o = pd.find((x) => x.id === d.id), i = D.docs.documents.findIndex((x) => x.id === d.id); if (o && i >= 0 && sig(o) !== sig(d) && sig(D.docs.documents[i]) === sig(o)) D.docs.documents[i] = clone(d); });
+      if (sig(PUB.site) !== sig(JSON.parse(prev.site)) && sig(D.site) === sig(JSON.parse(prev.site))) D.site = clone(PUB.site);
+    }
+    if (!prev || sig(PUB.docs) !== sig(JSON.parse(prev.docs)) || sig(PUB.site) !== sig(JSON.parse(prev.site))) ls.set(K_BASE, [JSON.stringify(PUB.site), JSON.stringify(PUB.docs)]);
+    ls.set(K_PUBSNAP, { site: JSON.stringify(PUB.site), docs: JSON.stringify(PUB.docs) });
+    return added;
+  }
+  normalize(D.site, D.docs); const addedOnLoad = mergePublished(); normalize(D.site, D.docs); ls.set(K_DRAFT, D);
   dflt(D.site, "pages", []); dflt(D.site, "links", []); dflt(D.site, "menu", { order: [] }); dflt(D.site, "theme", {}); dflt(D.site, "banner", { on: false, text: { pt: "", en: "" }, tone: "info" });
   dflt(D.site, "seo", { title: { pt: "", en: "" }, description: { pt: "", en: "" } }); dflt(D.site, "config", {}); dflt(D.site, "catalog", { p: {}, i: {}, s: {} });
   ["p", "i", "s"].forEach((k) => dflt(D.site.catalog, k, {}));
   D.docs.categories = D.docs.categories || {};
-  const save = () => ls.set(K_DRAFT, D);
+  const save = () => { D.pub = pubSig; D.pubStr = D.pubStr || JSON.stringify([PUB.site, PUB.docs]); ls.set(K_DRAFT, D); };
   const GH = () => ls.get(K_GH) || { owner: "", repo: "", branch: "main", token: "" };
-  const baseObjs = () => { const b = ls.get(K_BASE); const o = b ? [JSON.parse(b[0]), JSON.parse(b[1])] : [clone(PUB.site), clone(PUB.docs)]; normalize(o[0], o[1]); return o; };
+  const baseObjs = () => { const b = ls.get(K_BASE); const o = b && b.parts && b.pub === pubSig ? [JSON.parse(b.parts[0]), JSON.parse(b.parts[1])] : [clone(PUB.site), clone(PUB.docs)]; normalize(o[0], o[1]); return o; };
   const baseParts = () => baseObjs().map((x) => JSON.stringify(x));
   const baseSnap = () => sig(baseObjs());
   const snap = () => sig([D.site, D.docs]);
@@ -225,7 +266,7 @@
       }).join("");
       return `<h1 class="plain">Documentos</h1><p class="sub">Adicione, edite ou remova documentos da aba «Documentos». Os PDF são gravados em <code>docs/</code> ao publicar.</p>
         <label class="adm-card drop" id="dz"><span class="big">⬆️</span>Arraste PDF para aqui ou clique para escolher<small class="muted">Cada PDF vira um documento novo; depois preencha o título e a descrição.</small><input type="file" accept="application/pdf" multiple data-newdocs></label>
-        <div class="adm-card">${rows || "<p class='muted'>Sem documentos.</p>"}<p><button class="adm-btn sec" data-act="adddoc">+ Documento sem ficheiro</button></p></div>
+        <div class="adm-card">${rows || "<p class='muted'>Sem documentos.</p>"}<p class="adm-row"><button class="adm-btn sec" data-act="adddoc">+ Documento sem ficheiro</button><button class="adm-btn sec" data-act="syncdocs">↻ Atualizar com os documentos do site</button></p></div>
         <div class="adm-card"><h3>Categorias</h3>${Object.keys(D.docs.categories).filter((k) => k[0] !== "_").map((k) => `<div class="adm-cols" style="align-items:end">${inp("Categoria (PT) — " + esc(k), "docs", `categories.${k}.pt`, D.docs.categories[k].pt)}${inp("(EN)", "docs", `categories.${k}.en`, D.docs.categories[k].en)}</div><p style="margin:-4px 0 10px"><button class="adm-btn sec" data-act="delcat" data-k="${esc(k)}">Remover categoria</button></p>`).join("")}<button class="adm-btn sec" data-act="addcat">+ Nova categoria</button></div>`;
     },
     aparencia() {
@@ -300,6 +341,7 @@
   };
 
   function render(section) {
+    if (window.__admNotice) { msg = { k: "info", t: window.__admNotice }; window.__admNotice = null; }
     cur = views[section] ? section : "resumo";
     const nav = SECTIONS.map(([k, l, ic]) => `<a href="#gestao/${k}" ${k === cur ? 'aria-current="page"' : ""}><span class="i">${ic}</span>${l}${k === "publicar" && dirty() ? '<span class="adm-badge">●</span>' : ""}</a>`).join("");
     root.innerHTML = `<div class="adm"><aside class="adm-side"><div class="adm-brand"><div class="row"><img class="m" src="assets/logo-moz.svg" alt=""><span class="sep"></span><img class="s" src="assets/logo-sustain.png" alt=""></div><b>Gestão do site</b><small>LRI · MRV</small></div>${nav}<div class="adm-sp"></div>
@@ -364,6 +406,7 @@
     const b = e.target.closest("[data-act]"); if (!b) return;
     const a = b.getAttribute("data-act");
     if (a === "adddoc") { D.docs.documents.push({ id: "doc-" + Date.now().toString(36), file: "", thumb: "", category: Object.keys(D.docs.categories || {}).filter((k) => k[0] !== "_")[0] || "outro", title: { pt: "", en: "" }, description: { pt: "", en: "" }, authors: "", publisher: "", year: String(new Date().getFullYear()), language: "PT", pages: "", size: "", license: "", _new: true }); save(); render("documentos"); }
+    else if (a === "syncdocs") { const n = mergePublished(); normalize(D.site, D.docs); save(); render("documentos"); say(n ? "ok" : "info", n ? `${n} documento(s) do site acrescentado(s) à lista.` : "A lista já está atualizada com o site."); }
     else if (a === "mv") { const ks = menuItems().map((x) => x.key), k = b.getAttribute("data-k"), i = ks.indexOf(k), j = i + +b.getAttribute("data-d"); if (j >= 0 && j < ks.length) { ks.splice(j, 0, ks.splice(i, 1)[0]); D.site.menu.order = ks; save(); render("paginas"); } }
     else if (a === "addpage") { let n = D.site.pages.length + 1, id; do { id = "pagina-" + n++; } while (D.site.pages.some((p) => p.id === id)); D.site.pages.push({ id, title: { pt: "Nova página", en: "New page" }, visible: true, menu: true, _new: true }); save(); render("paginas"); }
     else if (a === "delpage") { const i = +b.getAttribute("data-i"), id = "p:" + D.site.pages[i].id; if (confirm("Remover esta página e os seus blocos?")) { D.site.pages.splice(i, 1); D.site.blocks.custom = D.site.blocks.custom.filter((x) => x.page !== id); save(); render("paginas"); } }
@@ -416,7 +459,7 @@
     const c = await api(g, "POST", "/git/commits", { message: (document.getElementById("commit-msg") || {}).value || "Gestão do site", tree: nt.sha, parents: [ref.object.sha] });
     await api(g, "PATCH", `/git/refs/heads/${br}`, { sha: c.sha });
     for (const p of pendingFiles()) await fDel(p);
-    D.files = {}; D.docs = docs; save(); ls.set(K_BASE, [JSON.stringify(D.site), JSON.stringify(D.docs)]);
+    D.files = {}; D.docs = docs; save(); ls.set(K_BASE, { parts: [JSON.stringify(D.site), JSON.stringify(D.docs)], pub: pubSig });
     msg = { k: "ok", t: `Publicado (commit ${c.sha.slice(0, 7)}). O site atualiza em cerca de 1 minuto.` };
     render("publicar");
   }
